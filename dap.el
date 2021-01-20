@@ -110,7 +110,7 @@ BINDINGS is the list of bindings."
   ("c" customize-face))
 
 (defun dap-target-face ()
-  "Identify faces"
+  "Identify a face target"
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (facep sym)
@@ -121,7 +121,7 @@ BINDINGS is the list of bindings."
   ("f" describe-function))
 
 (defun dap-target-function ()
-  "Identify functions"
+  "Identify a function target"
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (functionp sym)
@@ -133,7 +133,7 @@ BINDINGS is the list of bindings."
   ("e" eval-symbol))
 
 (defun dap-target-variable ()
-  "Identify variables"
+  "Identify a variable target"
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (boundp sym)
@@ -155,19 +155,27 @@ whose value is a keymap and target is a string, or nil to
 indicate it found no target. Finde"
   :type 'hook)
 
+
+(defun dap-traverse-binding (fct binding)
+  (cond ((keymapp binding) (dap-traverse-keymap fct binding))
+        ((commandp binding) (funcall fct binding))
+        (t (cons (car binding) (dap-traverse-binding fct (cdr binding))))))
+
+(defun dap-traverse-keymap- (fct map)
+  "Apply FCT to every command bound in MAP, which is assumed to be in canonical form."
+  (if (symbolp map) (dap-traverse-keymap fct (symbol-value map))
+    (cons 'keymap (-map (apply-partially 'dap-traverse-binding fct) (cdr map)))))
+
 (defun dap-traverse-keymap (fct map)
-  (assert (keymapp dap-xref-identifier-map))
-  (cons 'keymap
-        (-map (pcase-lambda (`(,key . ,binding))
-                (cons key (if (keymapp binding) (dap-traverse-keymap fct binding)
-                            (funcall fct binding))))
-              (cdr map))))
+  "Apply FCT to every command bound in MAP"
+  (assert (keymapp map))
+  (dap-traverse-keymap- fct (keymap-canonicalize map)))
 
 (defun dap-maps ()
   "Invoke all `dap-targets' and return the composed maps.
-The result is a cons of the maps to use for looking up the
-actions applied to the target, and the actions not applied to
-targets."
+The result is a cons of a composition of the applicable maps in
+the current context, applied to the target, and the same actions
+not applied to targets."
   (if (use-region-p) (cons dap-region-map dap-region-map)
   (let* ((type-target-pairs (-non-nil (--map (funcall it) dap-targets)))
          (map-target-pairs
@@ -193,6 +201,11 @@ action. The keymap contains possible actions."
   "Function to call to close the `dap-prompter'."
   :group 'dap
   :type 'symbol)
+
+(defun dap-menu ()
+  (interactive)
+  (pcase-let ((`(,map . ,prompt) (dap-maps)))
+    (popup-menu map)))
 
 (defun dap-dap ()
   "Prompt for action on the thing at point.
