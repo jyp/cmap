@@ -1,10 +1,9 @@
-
+;;; dap.el   -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2021  Jean-Philippe Bernardy
 ;; Copyright (C) 2020  Omar Antolín Camarena
 
-;;; dap.el   -*- lexical-binding: t -*-
-
+(require 'dash)
 (require 'ffap) ; used it to recognize file and url targets
 
 (defmacro dap-define-keymap (name doc &rest bindings)
@@ -38,7 +37,6 @@ BINDINGS is the list of bindings."
   ("r" rot13-region)
   ("=" count-words-region)
   ("s" whitespace-cleanup-region)
-  ("t" transpose-regions)
   ("o" org-table-convert-region)
   (";" comment-or-uncomment-region)
   ("w" write-region)
@@ -170,6 +168,7 @@ indicate it found no target. Finde"
 The result is a cons of the maps to use for looking up the
 actions applied to the target, and the actions not applied to
 targets."
+  (if (use-region-p) (cons dap-region-map dap-region-map)
   (let* ((type-target-pairs (-non-nil (--map (funcall it) dap-targets)))
          (map-target-pairs
           (-map (pcase-lambda (`(,type . ,target)) (cons (symbol-value type) target))
@@ -180,21 +179,34 @@ targets."
                         (lambda (cmd) (lambda () (interactive) (funcall cmd target)))
                          map))
                      map-target-pairs)))
-    (cons (make-composed-keymap maps) unapplied-map)))
+    (cons (make-composed-keymap maps) unapplied-map))))
+
+(defcustom dap-prompter
+  (lambda (map) (which-key--show-keymap "Action?" map nil nil 'no-paging))
+  "Keymap prompter.
+Function taking one keymap argument, called before prompting for
+action. The keymap contains possible actions."
+  :group 'dap
+  :type 'symbol)
+
+(defcustom dap-prompter-done 'which-key--hide-popup
+  "Function to call to close the `dap-prompter'."
+  :group 'dap
+  :type 'symbol)
 
 (defun dap-dap ()
   "Prompt for action on the thing at point.
 Use `dap-targets' to configure what can be done and how."
   (interactive)
-  (pcase-let ((`(,map . ,to-show) (dap-maps)))
-    (which-key--show-keymap "Action?" to-show nil nil 'no-paging)
-    (set-transient-map map nil 'which-key--hide-popup)))
+  (pcase-let ((`(,map . ,prompt) (dap-maps)))
+    (funcall dap-prompter prompt)
+    (set-transient-map map nil dap-prompter-done)))
 
 (defun dap-default ()
   "Act on the thing at point.
 Use `dap-targets' to configure what can be done. Like `dap-dap',
 but (use [(return)])."
   (interactive)
-  (pcase-let ((`(,map . ,to-show) (dap-maps)))
+  (pcase-let ((`(,map . ,_prompt) (dap-maps)))
     (funcall (lookup-key map [(return)]))))
 
