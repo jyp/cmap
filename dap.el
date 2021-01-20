@@ -57,7 +57,7 @@ BINDINGS is the list of bindings."
 
 (dap-define-keymap dap-url-map
   "Actions for url"
-  ([return] org-link-open-from-string))
+  ([return] org-open-link-from-string))
 
 (defun dap-target-url ()
   "Target the URL at point."
@@ -66,11 +66,11 @@ BINDINGS is the list of bindings."
 
 (dap-define-keymap dap-org-link-map
   "Keymap for Dap org link actions."
-  ([return] org-link-open-from-string))
+  ([return] org-open-link-from-string))
 
 (defun dap-target-org-link ()
   (when (and (eq major-mode 'org-mode)
-             (org-in-regexp org-link-any-re))
+             (org-in-regexp org-any-link-re))
     (cons 'dap-org-link-map (match-string-no-properties 0))))
 
 (dap-define-keymap dap-flymake-diagnostics-map
@@ -130,7 +130,7 @@ BINDINGS is the list of bindings."
 (dap-define-keymap dap-variable-map
   "Actions for variables"
   ("v" describe-variable)
-  ("e" eval-symbol))
+  ("e" (lambda (s) (eval-symbol s)))) ; eval-symbol is a primitive, not a function.
 
 (defun dap-target-variable ()
   "Identify a variable target"
@@ -158,7 +158,7 @@ indicate it found no target. Finde"
 
 (defun dap-traverse-binding (fct binding)
   (cond ((keymapp binding) (dap-traverse-keymap fct binding))
-        ((commandp binding) (funcall fct binding))
+        ((functionp binding) (funcall fct binding)) ; also accept functions, not just commands
         (t (cons (car binding) (dap-traverse-binding fct (cdr binding))))))
 
 (defun dap-traverse-keymap- (fct map)
@@ -184,8 +184,10 @@ not applied to targets."
          (unapplied-map (make-composed-keymap (-map 'car map-target-pairs)))
          (maps (-map (pcase-lambda (`(,map . ,target))
                        (dap-traverse-keymap
-                        (lambda (cmd) (lambda () (interactive) (funcall cmd target)))
-                         map))
+                        (lambda (cmd)
+                          (message "DM: %S %S" cmd target)
+                          (lambda () (interactive) (funcall cmd target)))
+                        map))
                      map-target-pairs)))
     (cons (make-composed-keymap maps) unapplied-map))))
 
@@ -201,11 +203,6 @@ action. The keymap contains possible actions."
   "Function to call to close the `dap-prompter'."
   :group 'dap
   :type 'symbol)
-
-(defun dap-menu ()
-  (interactive)
-  (pcase-let ((`(,map . ,prompt) (dap-maps)))
-    (popup-menu map)))
 
 (defun dap-dap ()
   "Prompt for action on the thing at point.
