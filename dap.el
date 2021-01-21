@@ -11,17 +11,19 @@
 DOC is the documentation string.
 BINDINGS is the list of bindings."
   (declare (indent 1))
-  (let* ((map (make-symbol "map"))
-         (parent (if (eq :parent (car bindings)) (cadr bindings)))
+  (let* ((parent (if (eq :parent (car bindings)) (cadr bindings)))
          (bindings (if parent (cddr bindings) bindings)))
     `(defvar ,name
-       (let ((,map (make-sparse-keymap)))
+       (let ((map (make-sparse-keymap)))
          ,@(mapcar (pcase-lambda (`(,key ,fn))
-                     (when (stringp key) (setq key (kbd key)))
-                     `(define-key ,map ,key ,(if (symbolp fn) `#',fn fn)))
+                     `(define-key map ,key ,(if (symbolp fn) `#',fn fn)))
                    bindings)
-         ,(if parent `(make-composed-keymap ,map ,parent) map))
+         (set-keymap-parent map ,parent)
+         map)
        ,doc)))
+
+(defun dap-make-sticky (&rest commands)
+  (dolist (cmd commands) (put cmd 'dap-sticky t)))
 
 (dap-define-keymap dap-region-map
   "Actions on the active region."
@@ -31,7 +33,7 @@ BINDINGS is the list of bindings."
   ("|" shell-command-on-region)
   ("e" eval-region)
   ("i" indent-rigidly)
-  ("TAB" indent-region)
+  ((kbd "TAB") indent-region)
   ("f" fill-region)
   ("p" fill-region-as-paragraph)
   ("r" rot13-region)
@@ -41,8 +43,10 @@ BINDINGS is the list of bindings."
   (";" comment-or-uncomment-region)
   ("w" write-region)
   ("m" apply-macro-to-region-lines)
-  ("n" narrow-to-region))
+  ("N" narrow-to-region))
 
+(defun dap-region-target ()
+  (when (use-region-p) (cons dap-region-map 'dap-no-arg)))
 
 (dap-define-keymap dap-xref-identifier-map
   "Actions for xref identifiers"
@@ -51,9 +55,10 @@ BINDINGS is the list of bindings."
 
 (defun dap-target-identifier ()
   "Identify Xref identifier"
-  (when-let* ((backend (xref-find-backend))
-              (def (xref-backend-identifier-at-point backend)))
-    (cons 'dap-xref-identifier-map def)))
+  (when (derived-mode-p 'prog-mode)
+    (when-let* ((backend (xref-find-backend))
+                (def (xref-backend-identifier-at-point backend)))
+      (cons 'dap-xref-identifier-map def))))
 
 (dap-define-keymap dap-url-map
   "Actions for url"
@@ -130,7 +135,7 @@ BINDINGS is the list of bindings."
 (dap-define-keymap dap-variable-map
   "Actions for variables"
   ("v" describe-variable)
-  ("e" (lambda (s) (eval-symbol s)))) ; eval-symbol is a primitive, not a function.
+  ("e" symbol-value))
 
 (defun dap-target-variable ()
   "Identify a variable target"
@@ -139,20 +144,82 @@ BINDINGS is the list of bindings."
     (when (boundp sym)
         (cons 'dap-variable-map sym))))
 
+(dap-define-keymap dap-org-timestamp-map
+  "Actions for timestamps"
+  ([return] org-time-stamp)
+  ("+" org-timestamp-up)
+  ("=" org-timestamp-up)
+  ("-" org-timestamp-down))
+
+(dap-make-sticky 'org-timestamp-down 'org-timestamp-up)
+
+(defun dap-target-org-timestamp ()
+  "Identify a timestamp target"
+    (when (and (fboundp 'org-at-timestamp-p) (org-at-timestamp-p 'lax))
+        (cons 'dap-org-timestamp-map 'dap-no-arg)))
+
+(dap-define-keymap dap-org-table-map
+  "Actions for org tables"
+  ("c" org-table-insert-column)
+  ("C" org-table-delete-column)
+  ("r" org-table-insert-row)
+  ("R" org-table-kill-row)
+  ("h" org-table-insert-hline)
+  ([right] org-table-move-column-right)
+  ([left] org-table-move-column-left)
+  ([up] org-table-move-row-up)
+  ([down] org-table-move-row-down))
+
+(dap-make-sticky
+ 'org-table-move-row-down
+ 'org-table-move-row-up
+ 'org-table-move-column-left
+ 'org-table-move-column-right)
+
+(defun dap-org-table-target ()
+  "Identify an org-table target"
+    (when (and (fboundp 'org-at-table-p) (org-at-table-p))
+        (cons 'dap-org-table-map 'dap-no-arg)))
+
+(dap-define-keymap dap-outline-heading-map
+  "Actions for timestamps"
+  ([return] org-show-subtree)
+  ("<" org-promote-subtree)
+  (">" org-demote-subtree)
+  ("n" outline-forward-same-level)
+  ("p" outline-backward-same-level)
+  ([up] org-move-subtree-up)
+  ([down] org-move-subtree-down)
+  ("x" org-cut-subtree)
+  ("c" org-copy-subtree)
+  ("N" org-narrow-to-subtree)
+  ("t" org-todo))
+
+(defun dap-outline-heading-target ()
+  "Identify a timestamp target"
+    (when (and (derived-mode-p 'outline)
+               (fboundp 'outline-on-heading-p) (outline-on-heading-p))
+        (cons 'dap-outline-heading-map 'dap-no-arg)))
+
 (defcustom dap-targets
   '(dap-target-flymake-diagnostics
     dap-target-org-link
     dap-target-url
-    dap-target-identifier
     dap-target-command
     dap-target-face
     dap-target-function
-    dap-target-variable)
+    dap-target-variable
+    dap-target-org-timestamp
+    dap-outline-heading-target
+    dap-org-table-target
+    dap-target-identifier
+    dap-region-target)
   "List of functions to determine the target in current context.
-Each function should take no argument and return either a cons
-of the form (map-symbol . target) where map-symbol is a symbol
-whose value is a keymap and target is a string, or nil to
-indicate it found no target. Finde"
+Each function should take no argument and return either nil to
+indicate it found no target or a cons of the form (map-symbol
+. target) where map-symbol is a symbol whose value is a keymap
+with relevant actions and target is an argument to pass to
+functions bound in map-symbol."
   :type 'hook)
 
 
@@ -176,20 +243,19 @@ indicate it found no target. Finde"
 The result is a cons of a composition of the applicable maps in
 the current context, applied to the target, and the same actions
 not applied to targets."
-  (if (use-region-p) (cons dap-region-map dap-region-map)
   (let* ((type-target-pairs (-non-nil (--map (funcall it) dap-targets)))
          (map-target-pairs
           (-map (pcase-lambda (`(,type . ,target)) (cons (symbol-value type) target))
                 type-target-pairs))
          (unapplied-map (make-composed-keymap (-map 'car map-target-pairs)))
          (maps (-map (pcase-lambda (`(,map . ,target))
-                       (dap-traverse-keymap
-                        (lambda (cmd)
-                          (message "DM: %S %S" cmd target)
-                          (lambda () (interactive) (funcall cmd target)))
-                        map))
+                       (if (eq target 'dap-no-arg) map
+                         (dap-traverse-keymap
+                          (lambda (cmd)
+                            (lambda () (interactive) (funcall cmd target)))
+                          map)))
                      map-target-pairs)))
-    (cons (make-composed-keymap maps) unapplied-map))))
+    (cons (make-composed-keymap maps) unapplied-map)))
 
 (defcustom dap-prompter
   (lambda (map) (which-key--show-keymap "Action?" map nil nil 'no-paging))
@@ -204,19 +270,23 @@ action. The keymap contains possible actions."
   :group 'dap
   :type 'symbol)
 
+
+(defun dap-keep-pred ()
+  "Should the transient map remain active?"
+  (and (symbolp this-command) (get this-command 'dap-sticky)))
+
 (defun dap-dap ()
   "Prompt for action on the thing at point.
 Use `dap-targets' to configure what can be done and how."
   (interactive)
   (pcase-let ((`(,map . ,prompt) (dap-maps)))
     (funcall dap-prompter prompt)
-    (set-transient-map map nil dap-prompter-done)))
+    (set-transient-map map 'dap-keep-pred dap-prompter-done)))
 
 (defun dap-default ()
   "Act on the thing at point.
 Use `dap-targets' to configure what can be done. Like `dap-dap',
-but (use [(return)])."
+but (use [return])."
   (interactive)
   (pcase-let ((`(,map . ,_prompt) (dap-maps)))
-    (funcall (lookup-key map [(return)]))))
-
+    (funcall (lookup-key map [return]))))
