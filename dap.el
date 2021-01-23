@@ -30,6 +30,7 @@ BINDINGS is the list of bindings."
        ,doc)))
 
 (defun dap-make-sticky (&rest commands)
+  "Make COMMANDS repeatable with `dap-dap'."
   (dolist (cmd commands) (put cmd 'dap-sticky t)))
 
 (dap-define-keymap dap-region-map
@@ -53,6 +54,7 @@ BINDINGS is the list of bindings."
   ("N" narrow-to-region))
 
 (defun dap-region-target ()
+  "Region target."
   (when (use-region-p) (cons dap-region-map 'dap-no-arg)))
 
 (dap-define-keymap dap-xref-identifier-map
@@ -61,7 +63,7 @@ BINDINGS is the list of bindings."
   ([backspace] xref-find-references))
 
 (defun dap-target-identifier ()
-  "Identify Xref identifier"
+  "Identify Xref identifier."
   (when (derived-mode-p 'prog-mode)
     (when-let* ((backend (xref-find-backend))
                 (def (xref-backend-identifier-at-point backend)))
@@ -81,6 +83,7 @@ BINDINGS is the list of bindings."
   ([return] org-open-link-from-string))
 
 (defun dap-target-org-link ()
+  "Org-mode link target."
   (when (and (eq major-mode 'org-mode)
              (org-in-regexp org-any-link-re))
     (cons 'dap-org-link-map (match-string-no-properties 0))))
@@ -95,13 +98,13 @@ BINDINGS is the list of bindings."
 (dap-make-sticky 'flymake-goto-prev-error 'flymake-goto-next-error)
 
 (defun dap-target-flymake-diagnostics ()
-  "Identify flymake diagnostics"
+  "Identify flymake diagnostics."
   (when-let* ((diags (flymake-diagnostics (point))))
     (cons 'dap-flymake-diagnostics-map diags)))
 
 (dap-define-keymap dap-flyspell-map
   "Keymap for Flyspell error"
-  ([return] flyspell-correct-at-point)
+  ([return] ispell-word)
   ("b" flyspell-buffer))
 
 (defun dap-flyspell-target ()
