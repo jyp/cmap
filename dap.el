@@ -1,7 +1,14 @@
-;;; dap.el   -*- lexical-binding: t -*-
+;;; dap.el --- Do At Point  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2021  Jean-Philippe Bernardy
 ;; Copyright (C) 2020  Omar Antolín Camarena
+
+;;; Commentary:
+
+;; Act on relevant object at point.  The main entry point is `dap-dap'.
+;; The main configuration entry point is `dap-targets'.
+
+;;; Code:
 
 (require 'dash)
 (require 'ffap) ; used it to recognize file and url targets
@@ -23,6 +30,7 @@ BINDINGS is the list of bindings."
        ,doc)))
 
 (defun dap-make-sticky (&rest commands)
+  "Make COMMANDS repeatable with `dap-dap'."
   (dolist (cmd commands) (put cmd 'dap-sticky t)))
 
 (dap-define-keymap dap-region-map
@@ -46,6 +54,7 @@ BINDINGS is the list of bindings."
   ("N" narrow-to-region))
 
 (defun dap-region-target ()
+  "Region target."
   (when (use-region-p) (cons dap-region-map 'dap-no-arg)))
 
 (dap-define-keymap dap-xref-identifier-map
@@ -54,7 +63,7 @@ BINDINGS is the list of bindings."
   ([backspace] xref-find-references))
 
 (defun dap-target-identifier ()
-  "Identify Xref identifier"
+  "Identify Xref identifier."
   (when (derived-mode-p 'prog-mode)
     (when-let* ((backend (xref-find-backend))
                 (def (xref-backend-identifier-at-point backend)))
@@ -74,6 +83,7 @@ BINDINGS is the list of bindings."
   ([return] org-open-link-from-string))
 
 (defun dap-target-org-link ()
+  "Org-mode link target."
   (when (and (eq major-mode 'org-mode)
              (org-in-regexp org-any-link-re))
     (cons 'dap-org-link-map (match-string-no-properties 0))))
@@ -81,19 +91,44 @@ BINDINGS is the list of bindings."
 (dap-define-keymap dap-flymake-diagnostics-map
   "Keymap for Dap flymake diagnostics actions."
   ([return] attrap-flymake-diags)
-  ("a" flymake-show-diagnostics-buffer))
+  ("a" flymake-show-diagnostics-buffer)
+  ("n" flymake-goto-next-error)
+  ("p" flymake-goto-prev-error))
+
+(dap-make-sticky 'flymake-goto-prev-error 'flymake-goto-next-error)
 
 (defun dap-target-flymake-diagnostics ()
-  "Identify flymake diagnostics"
+  "Identify flymake diagnostics."
   (when-let* ((diags (flymake-diagnostics (point))))
     (cons 'dap-flymake-diagnostics-map diags)))
+
+(dap-define-keymap dap-flyspell-map
+  "Keymap for Flyspell error"
+  ([return] ispell-word)
+  ("b" flyspell-buffer))
+
+(defun dap-flyspell-target ()
+  "Identify Flyspell error."
+  (when (and (bound-and-true-p flyspell-mode)
+             (-any #'flyspell-overlay-p (overlays-at (point))))
+    (cons 'dap-flyspell-map 'dap-no-arg)))
+
+(dap-define-keymap dap-flycheck-map
+  "Keymap for Flycheck error"
+  ([return] attrap-flycheck))
+
+(defun dap-flycheck-target ()
+  "Identify Flycheck message."
+  (when (and (bound-and-true-p flycheck-mode)
+             (flycheck-overlays-at (point)))
+    (cons 'dap-flycheck-map (point))))
 
 (dap-define-keymap dap-symbol-map
   "Actions for symbols"
   ("i" info-lookup-symbol))
 
 (defun dap-target-symbol ()
-  "Identify symbol"
+  "Identify symbol."
   (when (derived-mode-p 'prog-mode)
     (when-let* ((name (thing-at-point 'symbol))
                 (sym (intern-soft name)))
@@ -105,7 +140,7 @@ BINDINGS is the list of bindings."
   ("I" Info-goto-emacs-command-node))
 
 (defun dap-target-command ()
-  "Identify command"
+  "Identify command."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (commandp sym)
@@ -117,7 +152,7 @@ BINDINGS is the list of bindings."
   ("c" customize-face))
 
 (defun dap-target-face ()
-  "Identify a face target"
+  "Identify a face target."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (facep sym)
@@ -128,7 +163,7 @@ BINDINGS is the list of bindings."
   ("f" describe-function))
 
 (defun dap-target-function ()
-  "Identify a function target"
+  "Identify a function target."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (functionp sym)
@@ -140,7 +175,7 @@ BINDINGS is the list of bindings."
   ("e" symbol-value))
 
 (defun dap-target-variable ()
-  "Identify a variable target"
+  "Identify a variable target."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (boundp sym)
@@ -156,7 +191,7 @@ BINDINGS is the list of bindings."
 (dap-make-sticky 'org-timestamp-down 'org-timestamp-up)
 
 (defun dap-target-org-timestamp ()
-  "Identify a timestamp target"
+  "Identify a timestamp target."
     (when (and (fboundp 'org-at-timestamp-p) (org-at-timestamp-p 'lax))
         (cons 'dap-org-timestamp-map 'dap-no-arg)))
 
@@ -167,10 +202,10 @@ BINDINGS is the list of bindings."
   ("r" org-table-insert-row)
   ("R" org-table-kill-row)
   ("h" org-table-insert-hline)
-  ([right] org-table-move-column-right)
-  ([left] org-table-move-column-left)
-  ([up] org-table-move-row-up)
-  ([down] org-table-move-row-down))
+  ([shift right] org-table-move-column-right)
+  ([shift left] org-table-move-column-left)
+  ([shift up] org-table-move-row-up)
+  ([shift down] org-table-move-row-down))
 
 (dap-make-sticky
  'org-table-move-row-down
@@ -179,7 +214,7 @@ BINDINGS is the list of bindings."
  'org-table-move-column-right)
 
 (defun dap-org-table-target ()
-  "Identify an org-table target"
+  "Identify an org-table target."
     (when (and (fboundp 'org-at-table-p) (org-at-table-p))
         (cons 'dap-org-table-map 'dap-no-arg)))
 
@@ -198,13 +233,15 @@ BINDINGS is the list of bindings."
   ("t" org-todo))
 
 (defun dap-outline-heading-target ()
-  "Identify a timestamp target"
-    (when (and (derived-mode-p 'outline)
+  "Identify a timestamp target."
+    (when (and (derived-mode-p 'outline-mode)
                (fboundp 'outline-on-heading-p) (outline-on-heading-p))
         (cons 'dap-outline-heading-map 'dap-no-arg)))
 
 (defcustom dap-targets
   '(dap-target-flymake-diagnostics
+    dap-flycheck-target
+    dap-flyspell-target
     dap-target-org-link
     dap-target-url
     dap-target-command
@@ -223,10 +260,12 @@ indicate it found no target or a cons of the form (map-symbol
 . target) where map-symbol is a symbol whose value is a keymap
 with relevant actions and target is an argument to pass to
 functions bound in map-symbol."
-  :type 'hook)
+  :type 'hook
+  :group 'dap)
 
 
 (defun dap-traverse-binding (fct binding)
+  "Apply FCT to the BINDING."
   (cond ((keymapp binding) (dap-traverse-keymap fct binding))
         ((functionp binding) (funcall fct binding)) ; also accept functions, not just commands
         (t (cons (car binding) (dap-traverse-binding fct (cdr binding))))))
@@ -237,7 +276,7 @@ functions bound in map-symbol."
     (cons 'keymap (-map (apply-partially 'dap-traverse-binding fct) (cdr map)))))
 
 (defun dap-traverse-keymap (fct map)
-  "Apply FCT to every command bound in MAP"
+  "Apply FCT to every command bound in MAP."
   (assert (keymapp map))
   (dap-traverse-keymap- fct (keymap-canonicalize map)))
 
@@ -264,7 +303,7 @@ not applied to targets."
   (lambda (map) (which-key--show-keymap "Action?" map nil nil 'no-paging))
   "Keymap prompter.
 Function taking one keymap argument, called before prompting for
-action. The keymap contains possible actions."
+action.  The keymap contains possible actions."
   :group 'dap
   :type 'symbol)
 
@@ -273,23 +312,27 @@ action. The keymap contains possible actions."
   :group 'dap
   :type 'symbol)
 
-
-(defun dap-keep-pred ()
+(defun dap--keep-pred ()
   "Should the transient map remain active?"
   (and (symbolp this-command) (get this-command 'dap-sticky)))
 
+;;;###autoload
 (defun dap-dap ()
   "Prompt for action on the thing at point.
 Use `dap-targets' to configure what can be done and how."
   (interactive)
   (pcase-let ((`(,map . ,prompt) (dap-maps)))
     (funcall dap-prompter prompt)
-    (set-transient-map map 'dap-keep-pred dap-prompter-done)))
+    (set-transient-map map 'dap--keep-pred dap-prompter-done)))
 
+;;;###autoload
 (defun dap-default ()
   "Act on the thing at point.
-Use `dap-targets' to configure what can be done. Like `dap-dap',
+Use `dap-targets' to configure what can be done.  Like `dap-dap',
 but (use [return])."
   (interactive)
   (pcase-let ((`(,map . ,_prompt) (dap-maps)))
     (funcall (lookup-key map [return]))))
+
+(provide 'dap)
+;;; dap.el ends here
