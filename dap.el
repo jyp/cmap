@@ -95,7 +95,9 @@ BINDINGS is the list of bindings."
 (defun dap-target-symbol ()
   "Identify symbol"
   (when (derived-mode-p 'prog-mode)
-    (cons 'dap-symbol-map (thing-at-point 'symbol))))
+    (when-let* ((name (thing-at-point 'symbol))
+                (sym (intern-soft name)))
+      (cons 'dap-symbol-map sym))))
 
 (dap-define-keymap dap-command-map
   "Actions for commands"
@@ -209,6 +211,7 @@ BINDINGS is the list of bindings."
     dap-target-face
     dap-target-function
     dap-target-variable
+    dap-target-symbol
     dap-target-org-timestamp
     dap-outline-heading-target
     dap-org-table-target
