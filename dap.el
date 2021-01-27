@@ -123,11 +123,28 @@ BINDINGS is the list of bindings."
              (flycheck-overlays-at (point)))
     (cons 'dap-flycheck-map (point))))
 
+(defun dap-hi-lock-symbol (sym)
+  (interactive)
+  (hi-lock-set-pattern
+   (format "\\_<%s\\_>" (regexp-quote (symbol-name sym)))
+   (hi-lock-read-face-name)))
+
+(dap-define-keymap dap-hi-lock-regexp-map
+  "Actions for hi-lock regexps"
+  ("h" hi-lock-unface-buffer))
+
+(defun dap-hi-lock-regexp-target ()
+  (when-let* ((name (thing-at-point 'symbol))
+	      (patterns (bound-and-true-p hi-lock-interactive-patterns))
+	      (matched (--first (s-matches-p it name) (-map 'car patterns))))
+    (cons 'dap-hi-lock-regexp-map matched)))
+
 (dap-define-keymap dap-symbol-map
   "Actions for symbols"
-  ("i" info-lookup-symbol))
+  ("i" info-lookup-symbol)
+  ("h" hi-lock-face-symbol-at-point))
 
-(defun dap-target-symbol ()
+(defun dap-symbol-target ()
   "Identify symbol."
   (when (derived-mode-p 'prog-mode)
     (when-let* ((name (thing-at-point 'symbol))
@@ -248,7 +265,8 @@ BINDINGS is the list of bindings."
     dap-target-face
     dap-target-function
     dap-target-variable
-    dap-target-symbol
+    dap-hi-lock-regexp-target
+    dap-symbol-target
     dap-target-org-timestamp
     dap-outline-heading-target
     dap-org-table-target
