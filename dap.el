@@ -147,7 +147,9 @@ BINDINGS is the list of bindings."
 
 (dap-define-keymap dap-hi-lock-regexp-map
   "Actions for hi-lock regexps"
-  ("h" hi-lock-unface-buffer))
+  ("h" hi-lock-unface-buffer)
+  ("n" re-search-forward)
+  ("p" re-search-backward))
 
 (defun dap-hi-lock-regexp-target ()
   (when-let* ((name (thing-at-point 'symbol))
@@ -157,6 +159,7 @@ BINDINGS is the list of bindings."
 
 (defun dap-hi-lock-symbol (sym)
   (interactive)
+  (require 'hi-lock)
   (hi-lock-set-pattern
    (format "\\_<%s\\_>" (regexp-quote (symbol-name sym)))
    (hi-lock-read-face-name)))
