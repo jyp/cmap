@@ -123,11 +123,7 @@ BINDINGS is the list of bindings."
              (flycheck-overlays-at (point)))
     (cons 'dap-flycheck-map (point))))
 
-(defun dap-hi-lock-symbol (sym)
-  (interactive)
-  (hi-lock-set-pattern
-   (format "\\_<%s\\_>" (regexp-quote (symbol-name sym)))
-   (hi-lock-read-face-name)))
+
 
 (dap-define-keymap dap-hi-lock-regexp-map
   "Actions for hi-lock regexps"
@@ -139,10 +135,16 @@ BINDINGS is the list of bindings."
 	      (matched (--first (s-matches-p it name) (-map 'car patterns))))
     (cons 'dap-hi-lock-regexp-map matched)))
 
+(defun dap-hi-lock-symbol (sym)
+  (interactive)
+  (hi-lock-set-pattern
+   (format "\\_<%s\\_>" (regexp-quote (symbol-name sym)))
+   (hi-lock-read-face-name)))
+
 (dap-define-keymap dap-symbol-map
   "Actions for symbols"
   ("i" info-lookup-symbol)
-  ("h" hi-lock-face-symbol-at-point))
+  ("h" dap-hi-lock-symbol))
 
 (defun dap-symbol-target ()
   "Identify symbol."
