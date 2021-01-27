@@ -159,14 +159,14 @@ BINDINGS is the list of bindings."
         (cons 'dap-face-map sym))))
 
 (dap-define-keymap dap-function-map
-  "Actions for functions"
+  "Actions for functions or macros"
   ("f" describe-function))
 
 (defun dap-target-function ()
-  "Identify a function target."
+  "Identify a function or macro target."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
-    (when (functionp sym)
+    (when (or (functionp sym) (macrop sym))
         (cons 'dap-function-map sym))))
 
 (dap-define-keymap dap-variable-map
