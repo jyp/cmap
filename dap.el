@@ -11,6 +11,7 @@
 ;;; Code:
 
 (require 'dash)
+(require 's)
 (require 'ffap) ; used it to recognize file and url targets
 
 (defmacro dap-define-keymap (name doc &rest bindings)
@@ -122,8 +123,6 @@ BINDINGS is the list of bindings."
   (when (and (bound-and-true-p flycheck-mode)
              (flycheck-overlays-at (point)))
     (cons 'dap-flycheck-map (point))))
-
-
 
 (dap-define-keymap dap-hi-lock-regexp-map
   "Actions for hi-lock regexps"
