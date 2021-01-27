@@ -211,12 +211,23 @@ BINDINGS is the list of bindings."
     (when (or (functionp sym) (macrop sym))
         (cons 'dap-function-map sym))))
 
+(dap-define-keymap dap-option-map
+  "Actions for options"
+  ("c" customize-option))
+
+(defun dap-option-target ()
+  "Identify a customize option."
+  (when-let* ((name (thing-at-point 'symbol))
+              (sym (intern-soft name)))
+    (when (custom-variable-p sym)
+        (cons 'dap-option-map sym))))
+
 (dap-define-keymap dap-variable-map
   "Actions for variables"
   ("v" describe-variable)
   ("e" symbol-value))
 
-(defun dap-target-variable ()
+(defun dap-variable-target ()
   "Identify a variable target."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
@@ -267,8 +278,8 @@ BINDINGS is the list of bindings."
   (">" org-demote-subtree)
   ("n" outline-forward-same-level)
   ("p" outline-backward-same-level)
-  ([up] org-move-subtree-up)
-  ([down] org-move-subtree-down)
+  ([shift up] org-move-subtree-up)
+  ([shift down] org-move-subtree-down)
   ("x" org-cut-subtree)
   ("c" org-copy-subtree)
   ("N" org-narrow-to-subtree)
@@ -289,7 +300,8 @@ BINDINGS is the list of bindings."
     dap-target-command
     dap-target-face
     dap-target-function
-    dap-target-variable
+    dap-variable-target
+    dap-option-target
     dap-hi-lock-regexp-target
     dap-symbol-target
     dap-target-org-timestamp
