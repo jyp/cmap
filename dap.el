@@ -122,7 +122,7 @@ BINDINGS is the list of bindings."
 
 (defun dap-target-flymake-diagnostics ()
   "Identify flymake diagnostics."
-  (when ((flymake-diagnostics (point)))
+  (when (and (fboundp 'flymake-diagnostics) (flymake-diagnostics (point)))
     (cons 'dap-flymake-diagnostics-map 'dap-no-arg)))
 
 (dap-define-keymap dap-flyspell-map
@@ -182,6 +182,10 @@ BINDINGS is the list of bindings."
   ("p" dap-symbol-prev)
   ("n" dap-symbol-next)
   ("h" dap-hi-lock-symbol))
+
+(dap-make-sticky
+ 'dap-symbol-next
+ 'dap-symbol-prev)
 
 (defun dap-symbol-target ()
   "Identify symbol."
