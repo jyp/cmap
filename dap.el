@@ -51,10 +51,6 @@ BINDINGS is the list of bindings."
          map)
        ,doc)))
 
-(defun dap-make-sticky (&rest commands)
-  "Make COMMANDS repeatable with `dap-dap'."
-  (dolist (cmd commands) (put cmd 'dap-sticky t)))
-
 (dap-define-keymap dap-region-map
   "Actions on the active region."
   ("u" upcase-region)
@@ -74,6 +70,16 @@ BINDINGS is the list of bindings."
   ("w" write-region)
   ("m" apply-macro-to-region-lines)
   ("N" narrow-to-region))
+
+(defun dap-cancel () (interactive))
+
+(dap-define-keymap dap-default-map
+  "Actions for anything"
+  ((kbd "SPC") dap-cancel))
+
+(defun dap-default-target ()
+  "Catchall target."
+  (cons 'dap-default-map 'dap-no-arg))
 
 (defun dap-region-target ()
   "Region target."
@@ -117,8 +123,6 @@ BINDINGS is the list of bindings."
   ("t" flymake-show-diagnostic)
   ("n" flymake-goto-next-error)
   ("p" flymake-goto-prev-error))
-
-(dap-make-sticky 'flymake-goto-prev-error 'flymake-goto-next-error)
 
 (defun dap-target-flymake-diagnostics ()
   "Identify flymake diagnostics."
@@ -182,10 +186,6 @@ BINDINGS is the list of bindings."
   ("p" dap-symbol-prev)
   ("n" dap-symbol-next)
   ("h" dap-hi-lock-symbol))
-
-(dap-make-sticky
- 'dap-symbol-next
- 'dap-symbol-prev)
 
 (defun dap-symbol-target ()
   "Identify symbol."
@@ -258,8 +258,6 @@ BINDINGS is the list of bindings."
   ("=" org-timestamp-up)
   ("-" org-timestamp-down))
 
-(dap-make-sticky 'org-timestamp-down 'org-timestamp-up)
-
 (defun dap-target-org-timestamp ()
   "Identify a timestamp target."
     (when (and (fboundp 'org-at-timestamp-p) (org-at-timestamp-p 'lax))
@@ -276,12 +274,6 @@ BINDINGS is the list of bindings."
   ([shift left] org-table-move-column-left)
   ([shift up] org-table-move-row-up)
   ([shift down] org-table-move-row-down))
-
-(dap-make-sticky
- 'org-table-move-row-down
- 'org-table-move-row-up
- 'org-table-move-column-left
- 'org-table-move-column-right)
 
 (defun dap-org-table-target ()
   "Identify an org-table target."
@@ -325,7 +317,8 @@ BINDINGS is the list of bindings."
     dap-outline-heading-target
     dap-org-table-target
     dap-target-identifier
-    dap-region-target)
+    dap-region-target
+    dap-default-target)
   "List of functions to determine the target in current context.
 Each function should take no argument and return either nil to
 indicate it found no target or a cons of the form (map-symbol
@@ -384,9 +377,19 @@ action.  The keymap contains possible actions."
   :group 'dap
   :type 'symbol)
 
+(defcustom dap-sticky-keys
+  '("<" ">" 
+    [shift right] [right]
+    [shift left] [left]
+    [shift up] [up]
+    [shift down] [down]
+    "n" "p" []) "Keys which won't close the prompt to
+    close (commands bound to these keys are expected to be
+    repeated)" :group 'dap :type '(list key-sequence))
+
 (defun dap--keep-pred ()
   "Should the transient map remain active?"
-  (and (symbolp this-command) (get this-command 'dap-sticky)))
+  (member (this-command-keys) dap-sticky-keys))
 
 ;;;###autoload
 (defun dap-dap ()
