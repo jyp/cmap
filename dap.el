@@ -168,10 +168,12 @@ BINDINGS is the list of bindings."
 
 (defun dap-symbol-next (sym)
   (interactive)
+  (forward-char)
   (re-search-forward (regexp-quote sym)))
 
 (defun dap-symbol-prev (sym)
   (interactive)
+  (backward-char)
   (re-search-backward (regexp-quote sym)))
 
 (dap-define-keymap dap-symbol-map
