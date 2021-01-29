@@ -156,7 +156,7 @@ BINDINGS is the list of bindings."
   (when-let* ((name (thing-at-point 'symbol))
 	      (patterns (bound-and-true-p hi-lock-interactive-patterns))
 	      (pos (point))
-	      (matched (--first (thing-at-point-looking-at (car it)))))
+	      (matched (--first (thing-at-point-looking-at (car it)) patterns)))
     (cons 'dap-hi-lock-regexp-map (car matched))))
 
 (defun dap-hi-lock-symbol (sym)
