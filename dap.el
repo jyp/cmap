@@ -33,7 +33,7 @@
 
 (require 'dash)
 (require 's)
-(require 'ffap) ; used it to recognize file and url targets
+(require 'thingatpt)
 
 (defmacro dap-define-keymap (name doc &rest bindings)
   "Define keymap variable NAME.
@@ -154,8 +154,9 @@ BINDINGS is the list of bindings."
 (defun dap-hi-lock-regexp-target ()
   (when-let* ((name (thing-at-point 'symbol))
 	      (patterns (bound-and-true-p hi-lock-interactive-patterns))
-	      (matched (--first (s-matches-p it name) (-map 'car patterns))))
-    (cons 'dap-hi-lock-regexp-map matched)))
+	      (pos (point))
+	      (matched (--first (thing-at-point-looking-at (car it)))))
+    (cons 'dap-hi-lock-regexp-map (car matched))))
 
 (defun dap-hi-lock-symbol (sym)
   (interactive)
@@ -164,9 +165,19 @@ BINDINGS is the list of bindings."
    (format "\\_<%s\\_>" (regexp-quote (symbol-name sym)))
    (hi-lock-read-face-name)))
 
+(defun dap-symbol-next (sym)
+  (interactive)
+  (re-search-forward (regexp-quote (symbol-name sym))))
+
+(defun dap-symbol-prev (sym)
+  (interactive)
+  (re-search-backward (regexp-quote (symbol-name sym))))
+
 (dap-define-keymap dap-symbol-map
   "Actions for symbols"
   ("i" info-lookup-symbol)
+  ("p" dap-symbol-prev)
+  ("n" dap-symbol-next)
   ("h" dap-hi-lock-symbol))
 
 (defun dap-symbol-target ()
