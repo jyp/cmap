@@ -112,8 +112,9 @@ BINDINGS is the list of bindings."
 
 (dap-define-keymap dap-flymake-diagnostics-map
   "Keymap for Dap flymake diagnostics actions."
-  ([return] attrap-flymake-diags)
+  ([return] attrap-flymake)
   ("a" flymake-show-diagnostics-buffer)
+  ("t" flymake-show-diagnostic)
   ("n" flymake-goto-next-error)
   ("p" flymake-goto-prev-error))
 
@@ -121,8 +122,8 @@ BINDINGS is the list of bindings."
 
 (defun dap-target-flymake-diagnostics ()
   "Identify flymake diagnostics."
-  (when-let* ((diags (flymake-diagnostics (point))))
-    (cons 'dap-flymake-diagnostics-map diags)))
+  (when ((flymake-diagnostics (point)))
+    (cons 'dap-flymake-diagnostics-map 'dap-no-arg)))
 
 (dap-define-keymap dap-flyspell-map
   "Keymap for Flyspell error"
