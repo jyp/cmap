@@ -163,16 +163,16 @@ BINDINGS is the list of bindings."
   (interactive)
   (require 'hi-lock)
   (hi-lock-set-pattern
-   (format "\\_<%s\\_>" (regexp-quote (symbol-name sym)))
+   (format "\\_<%s\\_>" (regexp-quote sym))
    (hi-lock-read-face-name)))
 
 (defun dap-symbol-next (sym)
   (interactive)
-  (re-search-forward (regexp-quote (symbol-name sym))))
+  (re-search-forward (regexp-quote sym)))
 
 (defun dap-symbol-prev (sym)
   (interactive)
-  (re-search-backward (regexp-quote (symbol-name sym))))
+  (re-search-backward (regexp-quote sym)))
 
 (dap-define-keymap dap-symbol-map
   "Actions for symbols"
@@ -184,9 +184,8 @@ BINDINGS is the list of bindings."
 (defun dap-symbol-target ()
   "Identify symbol."
   (when (derived-mode-p 'prog-mode)
-    (when-let* ((name (thing-at-point 'symbol))
-                (sym (intern-soft name)))
-      (cons 'dap-symbol-map sym))))
+    (when-let* ((name (thing-at-point 'symbol)))
+      (cons 'dap-symbol-map name))))
 
 (dap-define-keymap dap-command-map
   "Actions for commands"
