@@ -150,6 +150,7 @@ BINDINGS is the list of bindings."
              (flycheck-overlays-at (point)))
     (cons 'dap-flycheck-map (point))))
 
+
 (dap-define-keymap dap-hi-lock-regexp-map
   "Actions for hi-lock regexps"
   ("h" hi-lock-unface-buffer)
@@ -270,10 +271,10 @@ BINDINGS is the list of bindings."
   ("r" org-table-insert-row)
   ("R" org-table-kill-row)
   ("h" org-table-insert-hline)
-  ([shift right] org-table-move-column-right)
-  ([shift left] org-table-move-column-left)
-  ([shift up] org-table-move-row-up)
-  ([shift down] org-table-move-row-down))
+  ([(shift right)] org-table-move-column-right)
+  ([(shift left)] org-table-move-column-left)
+  ([(shift up)] org-table-move-row-up)
+  ([(shift down)] org-table-move-row-down))
 
 (defun dap-org-table-target ()
   "Identify an org-table target."
@@ -287,8 +288,8 @@ BINDINGS is the list of bindings."
   (">" org-demote-subtree)
   ("n" outline-forward-same-level)
   ("p" outline-backward-same-level)
-  ([shift up] org-move-subtree-up)
-  ([shift down] org-move-subtree-down)
+  ([(shift up)] org-move-subtree-up)
+  ([(shift down)] org-move-subtree-down)
   ("x" org-cut-subtree)
   ("c" org-copy-subtree)
   ("N" org-narrow-to-subtree)
@@ -379,10 +380,10 @@ action.  The keymap contains possible actions."
 
 (defcustom dap-sticky-keys
   '("<" ">" 
-    [shift right] [right]
-    [shift left] [left]
-    [shift up] [up]
-    [shift down] [down]
+    [S-right] [right]
+    [S-left] [left]
+    [S-up] [up]
+    [S-down] [down]
     "n" "p" []) "Keys which won't close the prompt to
     close (commands bound to these keys are expected to be
     repeated)" :group 'dap :type '(list key-sequence))
