@@ -35,71 +35,67 @@
 (require 's)
 (require 'thingatpt)
 
-(defmacro dap-define-keymap (name doc &rest bindings)
-  "Define keymap variable NAME.
-DOC is the documentation string.
-BINDINGS is the list of bindings."
-  (declare (indent 1))
-  (let* ((parent (if (eq :parent (car bindings)) (cadr bindings)))
-         (bindings (if parent (cddr bindings) bindings)))
-    `(defvar ,name
-       (let ((map (make-sparse-keymap)))
-         ,@(mapcar (pcase-lambda (`(,key ,fn))
-                     `(define-key map ,key ,(if (symbolp fn) `#',fn fn)))
-                   bindings)
-         (set-keymap-parent map ,parent)
-         map)
-       ,doc)))
 
-(dap-define-keymap dap-region-map
-  "Actions on the active region."
-  ("u" upcase-region)
-  ("l" downcase-region)
-  ("c" capitalize-region)
-  ("|" shell-command-on-region)
-  ("e" eval-region)
-  ("i" indent-rigidly)
-  ((kbd "TAB") indent-region)
-  ("f" fill-region)
-  ("p" fill-region-as-paragraph)
-  ("r" rot13-region)
-  ("=" count-words-region)
-  ("s" whitespace-cleanup-region)
-  ("o" org-table-convert-region)
-  (";" comment-or-uncomment-region)
-  ("w" write-region)
-  ("m" apply-macro-to-region-lines)
-  ("N" narrow-to-region))
+(defmacro dap-keymap (&rest bindings)
+  "Make keymap with given BINDINGS."
+  (declare (indent 1))
+  `(let ((map (make-sparse-keymap)))
+     ,@(mapcar (pcase-lambda (`(,key ,fn))
+                 `(define-key map ,key ,(if (symbolp fn) `#',fn fn)))
+               bindings)
+     map))
+
+
+(defvar dap-region-map
+  (dap-keymap
+   ("u"         upcase-region)
+   ("l"         downcase-region)
+   ("c"         capitalize-region)
+   ("|"         shell-command-on-region)
+   ("e"         eval-region)
+   ("i"         indent-rigidly)
+   ((kbd "TAB") indent-region)
+   ("f"         fill-region)
+   ("p"         fill-region-as-paragraph)
+   ("r"         rot13-region)
+   ("="         count-words-region)
+   ("s"         whitespace-cleanup-region)
+   ("o"         org-table-convert-region)
+   (";"         comment-or-uncomment-region)
+   ("w"         write-region)
+   ("m"         apply-macro-to-region-lines)
+   ("N"         narrow-to-region))
+  "Actions on the active region.")
 
 (defun dap-cancel () (interactive))
 
-(dap-define-keymap dap-default-map
-  "Actions for anything"
-  ((kbd "SPC") dap-cancel))
+(defvar dap-default-map
+  (dap-keymap
+   ((kbd "SPC") dap-cancel)  ) "Actions for anything")
 
 (defun dap-default-target ()
   "Catchall target."
   (cons 'dap-default-map 'dap-no-arg))
 
-(dap-define-keymap dap-mc-map
-  "Actions when multiple cursors are active"
-  ([up] mc/cycle-backward)
-  ([down] mc/cycle-forward)
-  ("\\"  mc/vertical-align-with-space))
+(defvar dap-mc-map
+  (dap-keymap
+   ([up] mc/cycle-backward)
+   ([down] mc/cycle-forward)
+   ("\\"  mc/vertical-align-with-space)  ) "Actions when multiple cursors are active")
 
 (defun dap-mc-target ()
   "Multiple cursors target."
   (when (and (bound-and-true-p multiple-cursors-mode) (> (mc/num-cursors) 1))
-    (cons 'dap-default-map 'dap-no-arg)))
+    (cons 'dap-mc-map 'dap-no-arg)))
 
 (defun dap-region-target ()
   "Region target."
   (when (use-region-p) (cons dap-region-map 'dap-no-arg)))
 
-(dap-define-keymap dap-xref-identifier-map
-  "Actions for xref identifiers"
-  ([return] xref-find-definitions)
-  ([backspace] xref-find-references))
+(defvar dap-xref-identifier-map
+  (dap-keymap
+   ([return] xref-find-definitions)
+   ([backspace] xref-find-references)  ) "Actions for xref identifiers")
 
 (defun dap-target-identifier ()
   "Identify Xref identifier."
@@ -108,18 +104,18 @@ BINDINGS is the list of bindings."
                 (def (xref-backend-identifier-at-point backend)))
       (cons 'dap-xref-identifier-map def))))
 
-(dap-define-keymap dap-url-map
-  "Actions for url"
-  ([return] org-open-link-from-string))
+(defvar dap-url-map
+  (dap-keymap
+   ([return] org-open-link-from-string)  ) "Actions for url")
 
 (defun dap-target-url ()
   "Target the URL at point."
   (when-let ((url (thing-at-point 'url)))
     (cons 'dap-url-map url)))
 
-(dap-define-keymap dap-org-link-map
-  "Keymap for Dap org link actions."
-  ([return] org-open-link-from-string))
+(defvar dap-org-link-map
+  (dap-keymap
+   ([return] org-open-link-from-string)  ) "Keymap for Dap org link actions.")
 
 (defun dap-target-org-link ()
   "Org-mode link target."
@@ -127,23 +123,23 @@ BINDINGS is the list of bindings."
              (org-in-regexp org-any-link-re))
     (cons 'dap-org-link-map (match-string-no-properties 0))))
 
-(dap-define-keymap dap-flymake-diagnostics-map
-  "Keymap for Dap flymake diagnostics actions."
-  ([return] attrap-flymake)
-  ("a" flymake-show-diagnostics-buffer)
-  ("t" flymake-show-diagnostic)
-  ("n" flymake-goto-next-error)
-  ("p" flymake-goto-prev-error))
+(defvar dap-flymake-diagnostics-map
+  (dap-keymap
+   ([return] attrap-flymake)
+   ("a" flymake-show-diagnostics-buffer)
+   ("t" flymake-show-diagnostic)
+   ("n" flymake-goto-next-error)
+   ("p" flymake-goto-prev-error)  ) "Keymap for Dap flymake diagnostics actions.")
 
 (defun dap-target-flymake-diagnostics ()
   "Identify flymake diagnostics."
   (when (and (fboundp 'flymake-diagnostics) (flymake-diagnostics (point)))
     (cons 'dap-flymake-diagnostics-map 'dap-no-arg)))
 
-(dap-define-keymap dap-flyspell-map
-  "Keymap for Flyspell error"
-  ([return] ispell-word)
-  ("b" flyspell-buffer))
+(defvar dap-flyspell-map
+  (dap-keymap
+   ([return] ispell-word)
+   ("b" flyspell-buffer)  ) "Keymap for Flyspell error")
 
 (defun dap-flyspell-target ()
   "Identify Flyspell error."
@@ -151,9 +147,9 @@ BINDINGS is the list of bindings."
              (-any #'flyspell-overlay-p (overlays-at (point))))
     (cons 'dap-flyspell-map 'dap-no-arg)))
 
-(dap-define-keymap dap-flycheck-map
-  "Keymap for Flycheck error"
-  ([return] attrap-flycheck))
+(defvar dap-flycheck-map
+  (dap-keymap
+   ([return] attrap-flycheck)  ) "Keymap for Flycheck error")
 
 (defun dap-flycheck-target ()
   "Identify Flycheck message."
@@ -162,11 +158,11 @@ BINDINGS is the list of bindings."
     (cons 'dap-flycheck-map (point))))
 
 
-(dap-define-keymap dap-hi-lock-regexp-map
-  "Actions for hi-lock regexps"
-  ("h" hi-lock-unface-buffer)
-  ("n" re-search-forward)
-  ("p" re-search-backward))
+(defvar dap-hi-lock-regexp-map
+  (dap-keymap
+   ("h" hi-lock-unface-buffer)
+   ("n" re-search-forward)
+   ("p" re-search-backward)  ) "Actions for hi-lock regexps")
 
 (defun dap-hi-lock-regexp-target ()
   (when-let* ((name (thing-at-point 'symbol))
@@ -192,12 +188,12 @@ BINDINGS is the list of bindings."
   (backward-char)
   (re-search-backward (format "\\_<%s\\_>" (regexp-quote sym))))
 
-(dap-define-keymap dap-symbol-map
-  "Actions for symbols"
-  ("i" info-lookup-symbol)
-  ("p" dap-symbol-prev)
-  ("n" dap-symbol-next)
-  ("h" dap-hi-lock-symbol))
+(defvar dap-symbol-map
+  (dap-keymap
+   ("i" info-lookup-symbol)
+   ("p" dap-symbol-prev)
+   ("n" dap-symbol-next)
+   ("h" dap-hi-lock-symbol)  ) "Actions for symbols")
 
 (defun dap-symbol-target ()
   "Identify symbol."
@@ -205,112 +201,112 @@ BINDINGS is the list of bindings."
     (when-let* ((name (thing-at-point 'symbol)))
       (cons 'dap-symbol-map name))))
 
-(dap-define-keymap dap-command-map
-  "Actions for commands"
-  ("k" where-is)
-  ("I" Info-goto-emacs-command-node))
+(defvar dap-command-map
+  (dap-keymap
+   ("k" where-is)
+   ("I" Info-goto-emacs-command-node)  ) "Actions for commands")
 
 (defun dap-target-command ()
   "Identify command."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (commandp sym)
-        (cons 'dap-command-map sym))))
+      (cons 'dap-command-map sym))))
 
-(dap-define-keymap dap-face-map
-  "Actions for faces"
-  ("f" describe-face)
-  ("c" customize-face))
+(defvar dap-face-map
+  (dap-keymap
+   ("f" describe-face)
+   ("c" customize-face)  ) "Actions for faces")
 
 (defun dap-target-face ()
   "Identify a face target."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (facep sym)
-        (cons 'dap-face-map sym))))
+      (cons 'dap-face-map sym))))
 
-(dap-define-keymap dap-function-map
-  "Actions for functions or macros"
-  ("f" describe-function))
+(defvar dap-function-map
+  (dap-keymap
+   ("f" describe-function)  ) "Actions for functions or macros")
 
 (defun dap-target-function ()
   "Identify a function or macro target."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (or (functionp sym) (macrop sym))
-        (cons 'dap-function-map sym))))
+      (cons 'dap-function-map sym))))
 
-(dap-define-keymap dap-option-map
-  "Actions for options"
-  ("c" customize-option))
+(defvar dap-option-map
+  (dap-keymap
+   ("c" customize-option)  ) "Actions for options")
 
 (defun dap-option-target ()
   "Identify a customize option."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (custom-variable-p sym)
-        (cons 'dap-option-map sym))))
+      (cons 'dap-option-map sym))))
 
-(dap-define-keymap dap-variable-map
-  "Actions for variables"
-  ("v" describe-variable)
-  ("e" symbol-value))
+(defvar dap-variable-map
+  (dap-keymap
+   ("v" describe-variable)
+   ("e" symbol-value)  ) "Actions for variables")
 
 (defun dap-variable-target ()
   "Identify a variable target."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
     (when (boundp sym)
-        (cons 'dap-variable-map sym))))
+      (cons 'dap-variable-map sym))))
 
-(dap-define-keymap dap-org-timestamp-map
-  "Actions for timestamps"
-  ([return] org-time-stamp)
-  ("+" org-timestamp-up)
-  ("=" org-timestamp-up)
-  ("-" org-timestamp-down))
+(defvar dap-org-timestamp-map
+  (dap-keymap
+   ([return] org-time-stamp)
+   ("+" org-timestamp-up)
+   ("=" org-timestamp-up)
+   ("-" org-timestamp-down)  ) "Actions for timestamps")
 
 (defun dap-target-org-timestamp ()
   "Identify a timestamp target."
-    (when (and (fboundp 'org-at-timestamp-p) (org-at-timestamp-p 'lax))
-        (cons 'dap-org-timestamp-map 'dap-no-arg)))
+  (when (and (fboundp 'org-at-timestamp-p) (org-at-timestamp-p 'lax))
+    (cons 'dap-org-timestamp-map 'dap-no-arg)))
 
-(dap-define-keymap dap-org-table-map
-  "Actions for org tables"
-  ("c" org-table-insert-column)
-  ("C" org-table-delete-column)
-  ("r" org-table-insert-row)
-  ("R" org-table-kill-row)
-  ("h" org-table-insert-hline)
-  ([(shift right)] org-table-move-column-right)
-  ([(shift left)] org-table-move-column-left)
-  ([(shift up)] org-table-move-row-up)
-  ([(shift down)] org-table-move-row-down))
+(defvar dap-org-table-map
+  (dap-keymap
+   ("c" org-table-insert-column)
+   ("C" org-table-delete-column)
+   ("r" org-table-insert-row)
+   ("R" org-table-kill-row)
+   ("h" org-table-insert-hline)
+   ([(shift right)] org-table-move-column-right)
+   ([(shift left)] org-table-move-column-left)
+   ([(shift up)] org-table-move-row-up)
+   ([(shift down)] org-table-move-row-down)  ) "Actions for org tables")
 
 (defun dap-org-table-target ()
   "Identify an org-table target."
-    (when (and (fboundp 'org-at-table-p) (org-at-table-p))
-        (cons 'dap-org-table-map 'dap-no-arg)))
+  (when (and (fboundp 'org-at-table-p) (org-at-table-p))
+    (cons 'dap-org-table-map 'dap-no-arg)))
 
-(dap-define-keymap dap-outline-heading-map
-  "Actions for timestamps"
-  ([return] org-show-subtree)
-  ("<" org-promote-subtree)
-  (">" org-demote-subtree)
-  ("n" outline-forward-same-level)
-  ("p" outline-backward-same-level)
-  ([(shift up)] org-move-subtree-up)
-  ([(shift down)] org-move-subtree-down)
-  ("x" org-cut-subtree)
-  ("c" org-copy-subtree)
-  ("N" org-narrow-to-subtree)
-  ("t" org-todo))
+(defvar dap-outline-heading-map
+  (dap-keymap
+   ([return] org-show-subtree)
+   ("<" org-promote-subtree)
+   (">" org-demote-subtree)
+   ("n" outline-forward-same-level)
+   ("p" outline-backward-same-level)
+   ([(shift up)] org-move-subtree-up)
+   ([(shift down)] org-move-subtree-down)
+   ("x" org-cut-subtree)
+   ("c" org-copy-subtree)
+   ("N" org-narrow-to-subtree)
+   ("t" org-todo)  ) "Actions for timestamps")
 
 (defun dap-outline-heading-target ()
   "Identify a timestamp target."
-    (when (and (derived-mode-p 'outline-mode)
-               (fboundp 'outline-on-heading-p) (outline-on-heading-p))
-        (cons 'dap-outline-heading-map 'dap-no-arg)))
+  (when (and (derived-mode-p 'outline-mode)
+             (fboundp 'outline-on-heading-p) (outline-on-heading-p))
+    (cons 'dap-outline-heading-map 'dap-no-arg)))
 
 (defcustom dap-targets
   '(dap-mc-target
