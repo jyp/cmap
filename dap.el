@@ -81,6 +81,17 @@ BINDINGS is the list of bindings."
   "Catchall target."
   (cons 'dap-default-map 'dap-no-arg))
 
+(dap-define-keymap dap-mc-map
+  "Actions when multiple cursors are active"
+  ([up] mc/cycle-backward)
+  ([down] mc/cycle-forward)
+  ("\\"  mc/vertical-align-with-space))
+
+(defun dap-mc-target ()
+  "Multiple cursors target."
+  (when (and (bound-and-true-p multiple-cursors-mode) (> (mc/num-cursors) 1))
+    (cons 'dap-default-map 'dap-no-arg)))
+
 (defun dap-region-target ()
   "Region target."
   (when (use-region-p) (cons dap-region-map 'dap-no-arg)))
@@ -302,7 +313,8 @@ BINDINGS is the list of bindings."
         (cons 'dap-outline-heading-map 'dap-no-arg)))
 
 (defcustom dap-targets
-  '(dap-target-flymake-diagnostics
+  '(dap-mc-target
+    dap-target-flymake-diagnostics
     dap-flycheck-target
     dap-flyspell-target
     dap-target-org-link
