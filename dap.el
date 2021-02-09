@@ -48,6 +48,7 @@
 
 (defvar dap-region-map
   (dap-keymap
+   ("h"         dap-hi-lock-region)
    ("u"         upcase-region)
    ("l"         downcase-region)
    ("c"         capitalize-region)
@@ -176,6 +177,13 @@
   (require 'hi-lock)
   (hi-lock-set-pattern
    (format "\\_<%s\\_>" (regexp-quote sym))
+   (hi-lock-read-face-name)))
+
+(defun dap-hi-lock-region (beg end)
+  (interactive "r")
+  (require 'hi-lock)
+  (hi-lock-set-pattern
+   (regexp-quote (buffer-substring-no-properties beg end)) 
    (hi-lock-read-face-name)))
 
 (defun dap-symbol-next (sym)
@@ -310,6 +318,7 @@
 
 (defcustom dap-targets
   '(dap-mc-target
+    dap-region-target
     dap-target-flymake-diagnostics
     dap-flycheck-target
     dap-flyspell-target
@@ -326,7 +335,6 @@
     dap-outline-heading-target
     dap-org-table-target
     dap-target-identifier
-    dap-region-target
     dap-default-target)
   "List of functions to determine the target in current context.
 Each function should take no argument and return either nil to
