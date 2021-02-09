@@ -90,7 +90,7 @@
 
 (defun dap-region-target ()
   "Region target."
-  (when (use-region-p) (cons dap-region-map 'dap-no-arg)))
+  (when (use-region-p) (cons 'dap-region-map 'dap-no-arg)))
 
 (defvar dap-xref-identifier-map
   (dap-keymap
