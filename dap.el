@@ -226,7 +226,7 @@
    ("f" describe-face)
    ("c" customize-face)  ) "Actions for faces")
 
-(defun dap-target-face ()
+(defun dap-face-target ()
   "Identify a face target."
   (when-let* ((name (thing-at-point 'symbol))
               (sym (intern-soft name)))
@@ -308,13 +308,46 @@
    ("x" org-cut-subtree)
    ("c" org-copy-subtree)
    ("N" org-narrow-to-subtree)
-   ("t" org-todo)  ) "Actions for timestamps")
+   ("t" org-todo)) "Actions for outline headings")
 
 (defun dap-outline-heading-target ()
-  "Identify a timestamp target."
+  "Identify an outline heading target."
   (when (and (derived-mode-p 'outline-mode)
              (fboundp 'outline-on-heading-p) (outline-on-heading-p))
     (cons 'dap-outline-heading-map 'dap-no-arg)))
+
+(defvar dap-org-item-map
+  (dap-keymap
+    ([return] org-list-repair)
+    ([S-right] org-cycle-list-bullet)
+    ([S-down] org-move-item-down)
+    ([S-up] org-move-item-up)
+    ([up] org-previous-item)
+    ([down] org-next-item)
+    ("'" org-insert-item)
+    ("y" org-list-make-subtree)
+    ("," org-outdent-item)
+    ("." org-indent-item)
+    ("<" org-outdent-item-tree)
+    (">" org-indent-item-tree))
+  "Actions for org-items")
+
+
+(defun dap-org-item-target ()
+  "Identify an org item target."
+  (when (and (derived-mode-p 'org-mode) (org-at-item-p))
+    (cons 'dap-org-item-map 'dap-no-arg)))
+
+(defvar dap-org-checkbox-map
+  (dap-keymap
+    ([return] org-toggle-checkbox)
+    ("r" org-toggle-radio-button))
+  "Actions for org checkboxes")
+
+(defun dap-org-checkbox-target ()
+  "Identify an org item target."
+  (when (and (derived-mode-p 'org-mode) (org-at-item-checkbox-p))
+    (cons 'dap-org-checkbox-map 'dap-no-arg)))
 
 (defcustom dap-targets
   '(dap-mc-target
@@ -325,15 +358,17 @@
     dap-target-org-link
     dap-target-url
     dap-target-command
-    dap-target-face
+    dap-face-target
     dap-target-function
     dap-variable-target
     dap-option-target
     dap-hi-lock-regexp-target
     dap-symbol-target
+    dap-org-checkbox-target
+    dap-org-item-target
     dap-target-org-timestamp
-    dap-outline-heading-target
     dap-org-table-target
+    dap-outline-heading-target
     dap-target-identifier
     dap-default-target)
   "List of functions to determine the target in current context.
@@ -396,6 +431,7 @@ action.  The keymap contains possible actions."
 
 (defcustom dap-sticky-keys
   '("<" ">" 
+    "," "." 
     [S-right] [right]
     [S-left] [left]
     [S-up] [up]
