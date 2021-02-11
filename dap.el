@@ -281,6 +281,8 @@
 
 (defvar dap-org-table-map
   (dap-keymap
+      ([return] org-table-recalculate)
+   ("^" org-table-sort-lines)
    ("c" org-table-insert-column)
    ("C" org-table-delete-column)
    ("r" org-table-insert-row)
@@ -299,6 +301,7 @@
 (defvar dap-outline-heading-map
   (dap-keymap
    ([return] org-show-subtree)
+   ("^" org-sort-entries)
    ("<" org-promote-subtree)
    (">" org-demote-subtree)
    ("n" outline-forward-same-level)
@@ -328,6 +331,8 @@
     ("y" org-list-make-subtree)
     ("," org-outdent-item)
     ("." org-indent-item)
+    ("^" org-sort-list)
+    ("*" org-toggle-heading)
     ("<" org-outdent-item-tree)
     (">" org-indent-item-tree))
   "Actions for org-items")
