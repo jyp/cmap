@@ -52,7 +52,8 @@
    ("u"         upcase-region)
    ("l"         downcase-region)
    ("c"         capitalize-region)
-   ("|"         shell-command-on-region)
+   ("\\"        align)
+   ("|"         align-regexp)
    ("e"         eval-region)
    ("i"         indent-rigidly)
    ((kbd "TAB") indent-region)
@@ -337,11 +338,23 @@
     (">" org-indent-item-tree))
   "Actions for org-items")
 
-
 (defun dap-org-item-target ()
   "Identify an org item target."
   (when (and (derived-mode-p 'org-mode) (org-at-item-p))
     (cons 'dap-org-item-map 'dap-no-arg)))
+
+(defvar dap-org-latex-map
+  (dap-keymap
+    ([return] org-latex-preview))
+  "Actions for org latex")
+
+(defun dap-org-latex-target ()
+  "Identify an org latex target."
+  (when (derived-mode-p 'org-mode)
+    (when-let* ((datum (org-element-context)))
+      (when (memq (org-element-type datum) '(latex-environment latex-fragment))
+        (cons 'dap-org-latex-map 'dap-no-arg)))))
+
 
 (defvar dap-org-checkbox-map
   (dap-keymap
@@ -363,12 +376,13 @@
     dap-target-org-link
     dap-target-url
     dap-target-command
-    dap-face-target
     dap-target-function
     dap-variable-target
+    dap-face-target
     dap-option-target
     dap-hi-lock-regexp-target
     dap-symbol-target
+    dap-org-latex-target
     dap-org-checkbox-target
     dap-org-item-target
     dap-target-org-timestamp
