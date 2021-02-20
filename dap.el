@@ -235,8 +235,8 @@
 
 (defvar dap-face-map
   (dap-keymap
-   ("f" describe-face)
-   ("c" customize-face)  ) "Actions for faces")
+   ("da" describe-face)
+   ("ca" customize-face)  ) "Actions for faces")
 
 (defun dap-face-target ()
   "Identify a face target."
@@ -247,7 +247,7 @@
 
 (defvar dap-function-map
   (dap-keymap
-   ("f" describe-function)  ) "Actions for functions or macros")
+   ("df" describe-function)) "Actions for functions or macros")
 
 (defun dap-target-function ()
   "Identify a function or macro target."
@@ -258,7 +258,7 @@
 
 (defvar dap-option-map
   (dap-keymap
-   ("c" customize-option)  ) "Actions for emacs customize options")
+   ("cv" customize-option)  ) "Actions for emacs customize options")
 
 (defun dap-option-target ()
   "Identify a customize option."
@@ -269,7 +269,7 @@
 
 (defvar dap-variable-map
   (dap-keymap
-   ("v" describe-variable)
+   ("dv" describe-variable)
    ("e" symbol-value)  ) "Actions for variables")
 
 (defun dap-variable-target ()
@@ -413,20 +413,44 @@ functions bound in map-symbol."
 
 
 (defun dap-traverse-binding (fct binding)
-  "Apply FCT to the BINDING."
-  (cond ((keymapp binding) (dap-traverse-keymap fct binding))
-        ((functionp binding) (funcall fct binding)) ; also accept functions, not just commands
-        (t (cons (car binding) (dap-traverse-binding fct (cdr binding))))))
+  "Apply FCT to the tail of BINDING."
+  (if (or (keymapp binding) (functionp binding))
+      (funcall fct binding)
+    (cons (car binding) (dap-traverse-binding fct (cdr binding)))))
 
 (defun dap-traverse-keymap- (fct map)
-  "Apply FCT to every command bound in MAP, which is assumed to be in canonical form."
-  (if (symbolp map) (dap-traverse-keymap fct (symbol-value map))
-    (cons 'keymap (-map (apply-partially 'dap-traverse-binding fct) (cdr map)))))
+  "Apply FCT to everything  bound in MAP, not recursively.
+MAP is assumed to be in canonical form."
+  (if (symbolp map) (dap-traverse-keymap-shallow fct (symbol-value map))
+    (cons 'keymap (-map (apply-partially #'dap-traverse-binding fct) (cdr map)))))
 
-(defun dap-traverse-keymap (fct map)
-  "Apply FCT to every command bound in MAP."
+(defun dap-traverse-keymap-shallow (map fct)
+  (declare (indent 1))
+  "Apply FCT to everthing bound in MAP, not recursively."
   (assert (keymapp map))
   (dap-traverse-keymap- fct (keymap-canonicalize map)))
+
+(defun dap-traverse-keymap (fct map)
+  "Apply FCT to every command bound in MAP, recursively."
+  (dap-traverse-keymap-shallow map
+   (lambda (x)
+     (if (keymapp x) (dap-traverse-keymap fct x)
+       (funcall fct x)))))
+
+(defun dap-shorten-keymap (map)
+  "Simplify MAP.
+Replace branches with a single subnode by that subnode."
+  (if (keymapp map)
+      (dap-traverse-keymap-shallow map
+        (lambda (x) (pcase (dap-shorten-keymap x)
+                      (`(keymap (,key . ,binding))  binding)
+                      (_ x))))
+    map))
+
+(defun dap--compose-maps (maps)
+  (dap-shorten-keymap (make-composed-keymap maps)))
+
+
 
 (defun dap-maps ()
   "Invoke all `dap-targets' and return the composed maps.
@@ -437,7 +461,7 @@ not applied to targets."
          (map-target-pairs
           (-map (pcase-lambda (`(,type . ,target)) (cons (symbol-value type) target))
                 type-target-pairs))
-         (unapplied-map (make-composed-keymap (-map 'car map-target-pairs)))
+         (unapplied-map (dap--compose-maps (-map 'car map-target-pairs)))
          (maps (-map (pcase-lambda (`(,map . ,target))
                        (if (eq target 'dap-no-arg) map
                          (dap-traverse-keymap
@@ -445,7 +469,8 @@ not applied to targets."
                             (lambda () (interactive) (funcall cmd target)))
                           map)))
                      map-target-pairs)))
-    (cons (make-composed-keymap maps) unapplied-map)))
+    (cons (dap--compose-maps maps) unapplied-map)))
+
 
 (defcustom dap-prompter
   (lambda (map) (which-key--show-keymap "Action?" map nil nil 'no-paging))
@@ -493,6 +518,7 @@ but (use [return])."
   (interactive)
   (pcase-let ((`(,map . ,_prompt) (dap-maps)))
     (funcall (lookup-key map [return]))))
+
 
 (provide 'dap)
 ;;; dap.el ends here
