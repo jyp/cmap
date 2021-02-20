@@ -123,7 +123,7 @@
 
 (defun dap-file-target ()
   "Target the file at point."
-  (when-let ((file (progn () (ffap-file-at-point))))
+  (when-let ((file (progn (require 'ffap) (ffap-file-at-point))))
     (cons 'dap-file-map file)))
 
 (defvar dap-org-link-map
