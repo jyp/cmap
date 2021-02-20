@@ -110,10 +110,21 @@
   (dap-keymap
    ([return] org-open-link-from-string)  ) "Actions for url")
 
-(defun dap-target-url ()
-  "Target the URL at point."
+(defun dap-url-target ()
+  "Target the url at point."
   (when-let ((url (thing-at-point 'url)))
     (cons 'dap-url-map url)))
+
+(defvar dap-file-map
+  (dap-keymap
+   ([return] find-file)
+   ("f" find-file)
+   ) "Actions for file")
+
+(defun dap-file-target ()
+  "Target the file at point."
+  (when-let ((file (progn () (ffap-file-at-point))))
+    (cons 'dap-file-map file)))
 
 (defvar dap-org-link-map
   (dap-keymap
@@ -247,7 +258,7 @@
 
 (defvar dap-option-map
   (dap-keymap
-   ("c" customize-option)  ) "Actions for options")
+   ("c" customize-option)  ) "Actions for emacs customize options")
 
 (defun dap-option-target ()
   "Identify a customize option."
@@ -275,7 +286,7 @@
    ("=" org-timestamp-up)
    ("-" org-timestamp-down)  ) "Actions for timestamps")
 
-(defun dap-target-org-timestamp ()
+(defun dap-org-timestamp-target ()
   "Identify a timestamp target."
   (when (and (fboundp 'org-at-timestamp-p) (org-at-timestamp-p 'lax))
     (cons 'dap-org-timestamp-map 'dap-no-arg)))
@@ -374,7 +385,8 @@
     dap-flycheck-target
     dap-flyspell-target
     dap-target-org-link
-    dap-target-url
+    dap-url-target
+    dap-file-target
     dap-target-command
     dap-target-function
     dap-variable-target
@@ -385,7 +397,7 @@
     dap-org-latex-target
     dap-org-checkbox-target
     dap-org-item-target
-    dap-target-org-timestamp
+    dap-org-timestamp-target
     dap-org-table-target
     dap-outline-heading-target
     dap-target-identifier
