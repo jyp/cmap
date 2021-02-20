@@ -451,6 +451,7 @@ action.  The keymap contains possible actions."
 (defcustom dap-sticky-keys
   '("<" ">" 
     "," "." 
+    "+" "-"
     [S-right] [right]
     [S-left] [left]
     [S-up] [up]
