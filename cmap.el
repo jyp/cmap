@@ -152,7 +152,7 @@
 (defvar cmap-flyspell-map
   (cmap-keymap
    ([return] . ispell-word)
-   ("b" flyspell-buffer)  ) "Keymap for Flyspell error")
+   ("b" . flyspell-buffer)) "Keymap for Flyspell error")
 
 (defun cmap-flyspell-target ()
   "Identify Flyspell error."
