@@ -34,7 +34,7 @@
 (require 'dash)
 (require 's)
 (require 'thingatpt)
-
+(require 'cl)
 
 (defmacro cmap-keymap (&rest bindings)
   "Make keymap with given BINDINGS."
@@ -44,7 +44,6 @@
                  `(define-key map ,key ,(if (symbolp fn) `#',fn fn)))
                bindings)
      map))
-
 
 (defvar cmap-region-map
   (cmap-keymap
@@ -466,7 +465,6 @@ Replace branches with a single subnode by that subnode."
 
 (defun cmap--compose-maps (maps)
   (cmap-shorten-keymap (make-composed-keymap maps)))
-
 
 
 (defun cmap-maps ()
