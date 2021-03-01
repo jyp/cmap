@@ -47,7 +47,7 @@
 
 (defvar cmap-region-map
   (cmap-keymap
-   ("h"         . cmap-hi-lock-region)
+   ;; ("h"         . cmap-hi-lock-region)
    ("u"         . upcase-region)
    ("l"         . downcase-region)
    ("c"         . capitalize-region)
@@ -170,32 +170,22 @@
     (cons 'cmap-flycheck-map (point))))
 
 
-(defvar cmap-hi-lock-regexp-map
+(defvar cmap-boon-hl-map
   (cmap-keymap
-   ("h" . hi-lock-unface-buffer)
-   ("n" . re-search-forward)
-   ("p" . re-search-backward)  ) "Actions for hi-lock regexps")
+   ("h" . boon-hl-remove)
+   ("n" . boon-hl-search)
+   ("p" . boon-hl-search-backward)) "Actions for boon-hl-patterns")
 
-(defun cmap-hi-lock-regexp-target ()
-  (when-let* ((name (thing-at-point 'symbol))
-	      (patterns (bound-and-true-p hi-lock-interactive-patterns))
-	      (pos (point))
-	      (matched (--first (thing-at-point-looking-at (car it)) patterns)))
-    (cons 'cmap-hi-lock-regexp-map (car matched))))
+(defun cmap-boon-hl-target ()
+  (when (bound-and-true-p boon-hl-patterns)
+    (cons 'cmap-boon-hl-map (car (boon-hl-patterns-at-point)))))
 
-(defun cmap-hi-lock-symbol (sym)
-  (interactive)
-  (require 'hi-lock)
-  (hi-lock-set-pattern
-   (format "\\_<%s\\_>" (regexp-quote sym))
-   (hi-lock-read-face-name)))
-
-(defun cmap-hi-lock-region (beg end)
-  (interactive "r")
-  (require 'hi-lock)
-  (hi-lock-set-pattern
-   (regexp-quote (buffer-substring-no-properties beg end)) 
-   (hi-lock-read-face-name)))
+;; (defun cmap-hi-lock-region (beg end)
+;;   (interactive "r")
+;;   (require 'hi-lock)
+;;   (hi-lock-set-pattern
+;;    (regexp-quote (buffer-substring-no-properties beg end)) 
+;;    (hi-lock-read-face-name)))
 
 (defun cmap-symbol-next (sym)
   (interactive)
@@ -212,7 +202,7 @@
    ("i" . info-lookup-symbol)
    ("p" . cmap-symbol-prev)
    ("n" . cmap-symbol-next)
-   ("h" . cmap-hi-lock-symbol)  ) "Actions for symbols")
+   ("h" . boon-hl-symbol)  ) "Actions for symbols")
 
 (defun cmap-symbol-target ()
   "Identify symbol."
@@ -408,7 +398,7 @@
     cmap-variable-target
     cmap-face-target
     cmap-option-target
-    cmap-hi-lock-regexp-target
+    cmap-boon-hl-target
     cmap-symbol-target
     cmap-org-latex-target
     cmap-org-checkbox-target
