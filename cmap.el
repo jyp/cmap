@@ -178,7 +178,8 @@
 
 (defun cmap-boon-hl-target ()
   (when (bound-and-true-p boon-hl-patterns)
-    (cons 'cmap-boon-hl-map (car (boon-hl-patterns-at-point)))))
+    (when-let* ((patterns (boon-hl-patterns-at-point)))
+      (cons 'cmap-boon-hl-map (car patterns)))))
 
 ;; (defun cmap-hi-lock-region (beg end)
 ;;   (interactive "r")
