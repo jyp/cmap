@@ -107,7 +107,7 @@
 
 (defvar cmap-url-map
   (cmap-keymap
-   ([return] . org-open-link-from-string)) "Actions for url")
+   ([return] . browse-url)) "Actions for url")
 
 (defun cmap-url-target ()
   "Target the url at point."
@@ -421,7 +421,7 @@ functions bound in map-symbol."
 
 (defun cmap-traverse-binding (fct binding)
   "Apply FCT to the tail of BINDING."
-  (if (or (keymapp binding) (functionp binding))
+  (if (or (keymapp binding) (symbolp binding)) ;; some functions may be not loaded yet, so must use  symbolp
       (funcall fct binding)
     (cons (car binding) (cmap-traverse-binding fct (cdr binding)))))
 
