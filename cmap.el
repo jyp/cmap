@@ -284,7 +284,7 @@
 (defvar cmap-org-table-map
   (cmap-keymap
     ([return]        . org-table-recalculate)
-    ("^"             . org-table-sort-lines)
+    ("s"             . org-table-sort-lines)
     ("c"             . org-table-insert-column)
     ("C"             . org-table-delete-column)
     ("r"             . org-table-insert-row)
