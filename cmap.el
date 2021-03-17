@@ -375,13 +375,25 @@
     ([up]     . eshell-previous-input)
     ([S-up]   . eshell-previous-prompt)
     ([S-down] . eshell-next-prompt))
-  "Actions for org checkboxes")
+  "Actions for eshell prompt")
 
 (defun cmap-eshell-target ()
   "Identify an eshell prompt target"
   (when (and (derived-mode-p 'eshell-mode)
              (save-excursion (beginning-of-line) (looking-at eshell-prompt-regexp)))
     (cons 'cmap-eshell-map 'cmap-no-arg)))
+
+(defvar cmap-elisp-sexp-map
+  (cmap-keymap
+    ([return] . pp-eval-last-sexp)
+    ("m"      . pp-macroexpand-last-sexp))
+  "Actions for elisp sexp")
+
+(defun cmap-elisp-sexp-target ()
+  "Identify an elisp sexp"
+  (when (and (derived-mode-p 'emacs-lisp-mode)
+             (looking-back ")"))
+    (cons 'cmap-elisp-sexp-map 'cmap-no-arg)))
 
 
 (defcustom cmap-targets
@@ -407,6 +419,7 @@
     cmap-org-timestamp-target
     cmap-org-table-target
     cmap-outline-heading-target
+    cmap-elisp-sexp-target
     cmap-target-identifier
     cmap-default-target)
   "List of functions to determine the target in current context.
