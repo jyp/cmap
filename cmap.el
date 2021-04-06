@@ -297,7 +297,7 @@
 
 (defun cmap-org-table-target ()
   "Identify an org-table target."
-  (when (and (fboundp 'org-at-table-p) (org-at-table-p))
+  (when (and (bound-and-true-p org-mode) (org-at-table-p))
     (cons 'cmap-org-table-map 'cmap-no-arg)))
 
 (defvar cmap-outline-heading-map
