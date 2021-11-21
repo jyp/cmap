@@ -395,10 +395,35 @@
              (looking-back ")"))
     (cons 'cmap-elisp-sexp-map 'cmap-no-arg)))
 
+(defvar cmap-alignable-map
+  (cmap-keymap
+    ("aa"     . align-current))
+  "Actions for alignable regions")
+
+(defun cmap-alignable ()
+  "Identify an alignable section"
+  (require 'align)
+  (when (-any
+         (pcase-lambda (`(,identifier . ,props))
+           (let-alist props
+             (and
+              (apply #'derived-mode-p (eval .modes)) ;; applicable mode
+              (save-excursion
+                (beginning-of-line)
+                (and
+                 ;; (case-fold-search (or .case-fold case-fold-search))
+                 (if (functionp .regexp)
+                     (funcall .regexp (line-end-position) nil)
+                   (search-forward-regexp .regexp (line-end-position) t)))
+                 (or (not .valid) ;; no extra validity condition
+                     (eval .valid))))))
+         align-rules-list)
+    (cons 'cmap-alignable-map 'cmap-no-arg)))
 
 (defcustom cmap-targets
   '(cmap-mc-target
     cmap-region-target
+    cmap-alignable
     cmap-target-flymake-diagnostics
     cmap-flycheck-target
     cmap-flyspell-target
