@@ -174,7 +174,10 @@
   (cmap-keymap
    ("h" . boon-hl-remove)
    ("n" . boon-hl-search)
-   ("p" . boon-hl-search-backward)) "Actions for boon-hl-patterns")
+   ([next] . boon-hl-search)
+   ("p" . boon-hl-search-backward)
+   ([prior] . boon-hl-search-backward)
+   ) "Actions for boon-hl-patterns")
 
 (defun cmap-boon-hl-target ()
   (when (bound-and-true-p boon-hl-patterns)
@@ -537,6 +540,7 @@ action.  The keymap contains possible actions."
     [S-left] [left]
     [S-up] [up]
     [S-down] [down]
+    [prior] [next]
     "n" "p" []) "Keys which won't close the prompt to
     close (commands bound to these keys are expected to be
     repeated)" :group 'cmap :type '(list key-sequence))
@@ -554,14 +558,31 @@ Use `cmap-targets' to configure what can be done and how."
     (funcall cmap-prompter prompt)
     (set-transient-map map 'cmap--keep-pred cmap-prompter-done)))
 
-;;;###autoload
-(defun cmap-default ()
-  "Act on the thing at point.
+(defun cmap-lucky (KEY)
+  "Act on the thing at point using KEY sequence.
 Use `cmap-targets' to configure what can be done.  Like `cmap-cmap',
-but (use [return])."
+but use KEY directly."
   (interactive)
   (pcase-let ((`(,map . ,_prompt) (cmap-maps)))
-    (funcall (lookup-key map [return]))))
+    (funcall (lookup-key map KEY))))
+
+;;;###autoload
+(defun cmap-default ()
+  "Act on the thing at point using the return key."
+  (interactive)
+  (cmap-lucky [return]))
+
+;;;###autoload
+(defun cmap-prior ()
+  "Act on the thing at point using the return key."
+  (interactive)
+  (cmap-lucky [prior]))
+
+;;;###autoload
+(defun cmap-next ()
+  "Act on the thing at point using the return key."
+  (interactive)
+  (cmap-lucky [next]))
 
 
 (provide 'cmap)
