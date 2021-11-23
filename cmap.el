@@ -293,10 +293,12 @@
     ("r"             . org-table-insert-row)
     ("R"             . org-table-kill-row)
     ("h"             . org-table-insert-hline)
+    ("X"             . org-table-transpose-table-at-point)
     ([(shift right)] . org-table-move-column-right)
     ([(shift left)]  . org-table-move-column-left)
     ([(shift up)]    . org-table-move-row-up)
-    ([(shift down)]  . org-table-move-row-down)  ) "Actions for org tables")
+    ([(shift down)]  . org-table-move-row-down)
+    ) "Actions for org tables")
 
 (defun cmap-org-table-target ()
   "Identify an org-table target."
