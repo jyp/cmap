@@ -373,6 +373,17 @@
   (when (and (derived-mode-p 'org-mode) (org-at-item-checkbox-p))
     (cons 'cmap-org-checkbox-map 'cmap-no-arg)))
 
+(defvar cmap-pdf-org-review-pos-map
+  (cmap-keymap
+    ("v" . pdf-org-review-pop-to-pdf))
+  "Actions for a position in a pdf")
+
+(defun cmap-pdf-org-review-target ()
+    "Identify a position in a pdf associated with the current node."
+    (when (and (derived-mode-p 'org-mode) (org-entry-get (point) "pdf-page"))
+      (cons 'cmap-pdf-org-review-pos-map 'cmap-no-arg)))
+
+
 (defvar cmap-eshell-map
   (cmap-keymap
     ([return] . eshell-send-input)
@@ -443,6 +454,7 @@
     cmap-option-target
     cmap-boon-hl-target
     cmap-symbol-target
+    cmap-pdf-org-review-target
     cmap-org-latex-target
     cmap-org-checkbox-target
     cmap-org-item-target
