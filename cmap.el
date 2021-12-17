@@ -413,8 +413,8 @@
 
 (defvar cmap-alignable-map
   (cmap-keymap
-    ("aa"     . align-current))
-  "Actions for alignable regions")
+    ("|"     . align-current))
+  "Actions for alignable blocks")
 
 (defun cmap-alignable ()
   "Identify an alignable section"
