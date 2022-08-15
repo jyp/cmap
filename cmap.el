@@ -140,6 +140,8 @@
    ([return] . attrap-flymake)
    ("a"      . flymake-show-diagnostics-buffer)
    ("t"      . flymake-show-diagnostic)
+   ([down]   . flymake-goto-next-error)
+   ([up]     . flymake-goto-prev-error)
    ("n"      . flymake-goto-next-error)
    ("p"      . flymake-goto-prev-error)  ) "Keymap for Cmap flymake diagnostics actions.")
 
@@ -151,6 +153,8 @@
 (defvar cmap-flyspell-map
   (cmap-keymap
    ([return] . ispell-word)
+   ([down]     . flyspell-goto-next-error)
+   ("n"      . flyspell-goto-next-error)
    ("b" . flyspell-buffer)) "Keymap for Flyspell error")
 
 (defun cmap-flyspell-target ()
