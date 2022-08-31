@@ -138,7 +138,7 @@
 (defvar cmap-flymake-diagnostics-map
   (cmap-keymap
    ([return] . attrap-flymake)
-   ("a"      . flymake-show-diagnostics-buffer)
+   ("a"      . flymake-show-buffer-diagnostics)
    ("t"      . flymake-show-diagnostic)
    ([down]   . flymake-goto-next-error)
    ([up]     . flymake-goto-prev-error)
@@ -147,8 +147,23 @@
 
 (defun cmap-target-flymake-diagnostics ()
   "Identify flymake diagnostics."
-  (when (and (fboundp 'flymake-diagnostics) (flymake-diagnostics (point)))
+  (when (and (fboundp 'flycheck-diagnostics) (flycheck-diagnostics (point)))
     (cons 'cmap-flymake-diagnostics-map 'cmap-no-arg)))
+
+(defvar cmap-flycheck-diagnostics-map
+  (cmap-keymap
+   ([return] . attrap-flycheck)
+   ("a"      . flycheck-list-errors)
+   ("t"      . flycheck-copy-errors-as-kill)
+   ([down]   . flycheck-goto-next-error)
+   ([up]     . flycheck-goto-prev-error)
+   ("n"      . flycheck-goto-next-error)
+   ("p"      . flycheck-goto-prev-error)) "Keymap for Cmap flycheck diagnostics actions.")
+
+(defun cmap-target-flycheck-diagnostics ()
+  "Identify flycheck diagnostics."
+  (when (and (fboundp 'flycheck-overlay-errors-at) (flycheck-overlay-errors-at (point)))
+    (cons 'cmap-flycheck-diagnostics-map 'cmap-no-arg)))
 
 (defvar cmap-flyspell-map
   (cmap-keymap
@@ -445,6 +460,7 @@
     cmap-region-target
     cmap-alignable
     cmap-target-flymake-diagnostics
+    cmap-target-flycheck-diagnostics
     cmap-flycheck-target
     cmap-flyspell-target
     cmap-eshell-target
