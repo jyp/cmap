@@ -163,8 +163,9 @@
 
 (defun cmap-target-flycheck-diagnostics ()
   "Identify flycheck diagnostics."
-  (when (and (fboundp 'flycheck-overlay-errors-at) (flycheck-overlay-errors-at (point)))
+  (when (and (bound-and-true-p flycheck-mode) (flycheck-overlay-errors-at (point)))
     (cons 'cmap-flycheck-diagnostics-map 'cmap-no-arg)))
+
 
 (defvar cmap-flyspell-map
   (cmap-keymap
@@ -178,17 +179,6 @@
   (when (and (bound-and-true-p flyspell-mode)
              (-any #'flyspell-overlay-p (overlays-at (point))))
     (cons 'cmap-flyspell-map 'cmap-no-arg)))
-
-(defvar cmap-flycheck-map
-  (cmap-keymap
-   ([return] . attrap-flycheck)  ) "Keymap for Flycheck error")
-
-(defun cmap-flycheck-target ()
-  "Identify Flycheck message."
-  (when (and (bound-and-true-p flycheck-mode)
-             (flycheck-overlays-at (point)))
-    (cons 'cmap-flycheck-map (point))))
-
 
 (defvar cmap-boon-hl-map
   (cmap-keymap
@@ -485,10 +475,9 @@
   '(cmap-mc-target
     cmap-region-target
     cmap-alignable
-    cmap-target-flymake-diagnostics
     cmap-target-smerge
+    cmap-target-flymake-diagnostics
     cmap-target-flycheck-diagnostics
-    cmap-flycheck-target
     cmap-flyspell-target
     cmap-eshell-target
     cmap-target-org-link
@@ -635,13 +624,13 @@ but use KEY directly."
 
 ;;;###autoload
 (defun cmap-prior ()
-  "Act on the thing at point using the return key."
+  "Act on the thing at point using the [prior] key."
   (interactive)
   (cmap-lucky [prior]))
 
 ;;;###autoload
 (defun cmap-next ()
-  "Act on the thing at point using the return key."
+  "Act on the thing at point using the [next] key."
   (interactive)
   (cmap-lucky [next]))
 
