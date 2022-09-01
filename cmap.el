@@ -623,7 +623,7 @@ but use KEY directly."
   (cmap-lucky [return]))
 
 ;;;###autoload
-(defun cmap-prior ()
+(defun cmap-prev ()
   "Act on the thing at point using the [prior] key."
   (interactive)
   (cmap-lucky [prior]))
