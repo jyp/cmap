@@ -36,6 +36,7 @@
 (require 'thingatpt)
 (require 'cl)
 
+;; TODO: consider easy-mmode-defmap instead
 (defmacro cmap-keymap (&rest bindings)
   "Make keymap with given BINDINGS."
   (declare (indent 0))
@@ -455,11 +456,37 @@
          align-rules-list)
     (cons 'cmap-alignable-map 'cmap-no-arg)))
 
+(defvar cmap-smerge-map
+  (cmap-keymap
+    ([down] . smerge-next)
+    ([up] . smerge-prev)
+    ("n" . smerge-next)
+    ("p" . smerge-prev)
+    ("r" . smerge-resolve)
+    ("a" . smerge-keep-all)
+    ("b" . smerge-keep-base)
+    ("l" . smerge-keep-lower)
+    ("u" . smerge-keep-upper)
+    ("E" . smerge-ediff)
+    ("C" . smerge-combine-with-next)
+    ("R" . smerge-refine)
+    ("\C-m" . smerge-keep-current)
+    ("=<" . smerge-diff-base-upper)
+    ("=>" . smerge-diff-base-lower)
+    ("==" . smerge-diff-upper-lower))
+  "Actions for smerge conflict")
+
+(defun cmap-target-smerge ()
+  "Identify smerge region"
+  (when (and (bound-and-true-p smerge-mode) (save-excursion (smerge-find-conflict (point))))
+    (cons 'cmap-smerge-map 'cmap-no-arg)))
+
 (defcustom cmap-targets
   '(cmap-mc-target
     cmap-region-target
     cmap-alignable
     cmap-target-flymake-diagnostics
+    cmap-target-smerge
     cmap-target-flycheck-diagnostics
     cmap-flycheck-target
     cmap-flyspell-target
