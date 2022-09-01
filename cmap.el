@@ -471,9 +471,23 @@
   (when (and (bound-and-true-p smerge-mode) (save-excursion (smerge-find-conflict (point))))
     (cons 'cmap-smerge-map 'cmap-no-arg)))
 
+(defvar cmap-button-map
+  (cmap-keymap
+    ([return] . push-button)
+    ("d" . button-describe)
+    ([prior]  . previous-button)
+    ([next]   . next-button))
+  "Actions for button")
+
+(defun cmap-button-target ()
+  "Identify button"
+  (when (and (fboundp 'button-at) (button-at (point)))
+    (cons 'cmap-button-map 'cmap-no-arg)))
+
 (defcustom cmap-targets
   '(cmap-mc-target
     cmap-region-target
+    cmap-button-target
     cmap-alignable
     cmap-target-smerge
     cmap-target-flymake-diagnostics
@@ -525,7 +539,7 @@ MAP is assumed to be in canonical form."
 (defun cmap-traverse-keymap-shallow (map fct)
   (declare (indent 1))
   "Apply FCT to everthing bound in MAP, not recursively."
-  (assert (keymapp map))
+  (cl-assert (keymapp map))
   (cmap-traverse-keymap- fct (keymap-canonicalize map)))
 
 (defun cmap-traverse-keymap (fct map)
