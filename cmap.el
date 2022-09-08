@@ -148,7 +148,7 @@
 
 (defun cmap-target-flymake-diagnostics ()
   "Identify flymake diagnostics."
-  (when (and (fboundp 'flycheck-diagnostics) (flycheck-diagnostics (point)))
+  (when (and (fboundp 'flymake-diagnostics) (flymake-diagnostics (point)))
     (cons 'cmap-flymake-diagnostics-map 'cmap-no-arg)))
 
 (defvar cmap-flycheck-diagnostics-map
@@ -605,9 +605,10 @@ action.  The keymap contains possible actions."
     [S-up] [up]
     [S-down] [down]
     [prior] [next]
-    "n" "p" []) "Keys which won't close the prompt to
-    close (commands bound to these keys are expected to be
-    repeated)" :group 'cmap :type '(list key-sequence))
+    "n" "p" [])
+  "Keys which won't close the prompt to close.
+Commands bound to these keys are expected to be repeated."
+  :group 'cmap :type '(list key-sequence))
 
 (defun cmap--keep-pred ()
   "Should the transient map remain active?"
