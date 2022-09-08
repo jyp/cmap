@@ -97,7 +97,8 @@
 (defvar cmap-xref-identifier-map
   (cmap-keymap
    ([return]    . xref-find-definitions)
-   ([backspace] . xref-find-references)  ) "Actions for xref identifiers")
+   ([backspace] . xref-find-references))
+  "Actions for xref identifiers")
 
 (defun cmap-target-identifier ()
   "Identify Xref identifier."
@@ -488,7 +489,7 @@
   '(cmap-mc-target
     cmap-region-target
     cmap-button-target
-    cmap-alignable
+    ;; cmap-alignable ;; crap
     cmap-target-smerge
     cmap-target-flymake-diagnostics
     cmap-target-flycheck-diagnostics
@@ -570,7 +571,8 @@ the current context, applied to the target, and the same actions
 not applied to targets."
   (let* ((type-target-pairs (-non-nil (--map (funcall it) cmap-targets)))
          (map-target-pairs
-          (-map (pcase-lambda (`(,type . ,target)) (cons (symbol-value type) target))
+          (-map (pcase-lambda (`(,type . ,target))
+                  (cons (symbol-value type) target))
                 type-target-pairs))
          (unapplied-map (cmap--compose-maps (-map 'car map-target-pairs)))
          (maps (-map (pcase-lambda (`(,map . ,target))
