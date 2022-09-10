@@ -137,11 +137,24 @@
              (org-in-regexp org-any-link-re))
     (cons 'cmap-org-link-map (match-string-no-properties 0))))
 
+(defun cmap-show-flymake-diagnostic (pos)
+  "Show the flymake diagnostic at POS in its own buffer."
+  (interactive "d")
+  (when-let ((buf (get-buffer-create "*flymake message*"))
+             (diags (flymake-diagnostics pos))
+             (d (-max-by (-on #'> #'flymake-diagnostic-beg) diags)))
+    (with-current-buffer buf
+      (normal-mode)
+      (erase-buffer)
+      (insert (flymake-diagnostic-text d))
+      (current-buffer))
+  (display-buffer buf)))
+
 (defvar cmap-flymake-diagnostics-map
   (cmap-keymap
    ([return] . attrap-flymake)
    ("a"      . flymake-show-buffer-diagnostics)
-   ("t"      . flymake-show-diagnostic)
+   ("d"      . cmap-show-flymake-diagnostic)
    ([down]   . flymake-goto-next-error)
    ([up]     . flymake-goto-prev-error)
    ("n"      . flymake-goto-next-error)
