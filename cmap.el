@@ -147,6 +147,7 @@
       (normal-mode)
       (erase-buffer)
       (insert (flymake-diagnostic-text d))
+      (goto-char (point-min))
       (current-buffer))
   (display-buffer buf)))
 
@@ -498,6 +499,18 @@
   (when (and (fboundp 'button-at) (button-at (point)))
     (cons 'cmap-button-map 'cmap-no-arg)))
 
+
+(defvar cmap-citar-key-map
+  (cmap-keymap
+    ([return] . citar-open-entry))
+  "Actions for citation keys")
+
+(defun cmap-citar-key-target ()
+  (when (--any (and (listp it) (member major-mode it))
+               (-map 'car citar-major-mode-functions))
+    (when-let ((key (citar--key-at-point)))
+      (cons 'cmap-citar-key-map (car key)))))
+
 (defcustom cmap-targets
   '(cmap-mc-target
     cmap-region-target
@@ -511,6 +524,7 @@
     cmap-target-org-link
     cmap-url-target
     cmap-file-target
+    cmap-citar-key-target
     cmap-target-command
     cmap-target-function
     cmap-variable-target
