@@ -508,8 +508,8 @@
 (defun cmap-citar-key-target ()
   (when (--any (and (listp it) (member major-mode it))
                (-map 'car citar-major-mode-functions))
-    (when-let ((key (citar--key-at-point)))
-      (cons 'cmap-citar-key-map (car key)))))
+    (when-let ((key (citar--major-mode-function 'key-at-point #'ignore)))
+      (cons 'cmap-citar-key-map (list (car key))))))
 
 (defcustom cmap-targets
   '(cmap-mc-target
