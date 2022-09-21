@@ -506,8 +506,9 @@
   "Actions for citation keys")
 
 (defun cmap-citar-key-target ()
-  (when (--any (and (listp it) (member major-mode it))
-               (-map 'car citar-major-mode-functions))
+  (when (and (boundp 'citar-major-mode-functions)
+             (--any (and (listp it) (member major-mode it))
+                    (-map 'car citar-major-mode-functions)))
     (when-let ((key (citar--major-mode-function 'key-at-point #'ignore)))
       (cons 'cmap-citar-key-map (list (car key))))))
 
