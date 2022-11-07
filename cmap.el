@@ -495,22 +495,24 @@
   "Actions for button")
 
 (defun cmap-button-target ()
-  "Identify button"
+  "Identify button."
   (when (and (fboundp 'button-at) (button-at (point)))
     (cons 'cmap-button-map 'cmap-no-arg)))
 
 
 (defvar cmap-citar-key-map
   (cmap-keymap
-    ([return] . citar-open-entry))
+    ([return] . citar-open-entry)) ;; in citar 1.0, citar-open-entry a string argument
   "Actions for citation keys")
 
 (defun cmap-citar-key-target ()
+  "Identify bib key using citar.  The target is a single key, as a string."
   (when (and (boundp 'citar-major-mode-functions)
              (--any (and (listp it) (member major-mode it))
                     (-map 'car citar-major-mode-functions)))
     (when-let ((key (citar--major-mode-function 'key-at-point #'ignore)))
-      (cons 'cmap-citar-key-map (list (car key))))))
+      ;; in citar 1.0, the key has format (string . start-pos . end-pos), and 
+      (cons 'cmap-citar-key-map (car key)))))
 
 (defcustom cmap-targets
   '(cmap-mc-target
