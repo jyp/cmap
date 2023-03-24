@@ -304,6 +304,7 @@
 
 (defvar cmap-org-timestamp-map
   (cmap-keymap
+   ([find]   . org-follow-timestamp-link)
    ([return] . org-time-stamp)
    ("+"      . org-timestamp-up)
    ("="      . org-timestamp-up)
