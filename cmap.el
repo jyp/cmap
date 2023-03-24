@@ -73,7 +73,9 @@
 
 (defvar cmap-default-map
   (cmap-keymap
-   ((kbd "SPC") . cmap-cancel)) "Actions for anything")
+    ((kbd "SPC") . cmap-cancel)
+    ([find] . xref-find-definitions))
+  "Actions for anything")
 
 (defun cmap-default-target ()
   "Catchall target."
@@ -83,7 +85,8 @@
   (cmap-keymap
    ([up]   . mc/cycle-backward)
    ([down] . mc/cycle-forward)
-   ("\\"   . mc/vertical-align-with-space)  ) "Actions when multiple cursors are active")
+   ("\\"   . mc/vertical-align-with-space))
+  "Actions when multiple cursors are active")
 
 (defun cmap-mc-target ()
   "Multiple cursors target."
@@ -96,7 +99,7 @@
 
 (defvar cmap-xref-identifier-map
   (cmap-keymap
-   ([return]    . xref-find-definitions)
+   ([find]    . xref-find-definitions)
    ([backspace] . xref-find-references))
   "Actions for xref identifiers")
 
@@ -109,7 +112,8 @@
 
 (defvar cmap-url-map
   (cmap-keymap
-   ([return] . browse-url)) "Actions for url")
+    ([find]    . browse-url))
+  "Actions for url")
 
 (defun cmap-url-target ()
   "Target the url at point."
@@ -118,7 +122,7 @@
 
 (defvar cmap-file-map
   (cmap-keymap
-   ([return] . find-file)
+   ([find]   . find-file)
    ("f"      . find-file))
   "Actions for file")
 
@@ -129,7 +133,8 @@
 
 (defvar cmap-org-link-map
   (cmap-keymap
-   ([return] . org-open-link-from-string)) "Keymap for Cmap org link actions.")
+    ([find] . org-open-link-from-string))
+  "Keymap for Cmap org link actions.")
 
 (defun cmap-target-org-link ()
   "Org-mode link target."
@@ -499,10 +504,34 @@
   (when (and (fboundp 'button-at) (button-at (point)))
     (cons 'cmap-button-map 'cmap-no-arg)))
 
+(defun cmap-reftex-goto-label (data)
+  (reftex-show-label-location data t nil 'stay))
+
+(defvar cmap-reftex-ref-map
+  (cmap-keymap
+    ([find] . cmap-reftex-goto-label))
+  "Actions for reftex ref")
+
+(defun cmap-tex-argument-at-point ()
+  (interactive)
+  (with-syntax-table (apply #'TeX-search-syntax-table (LaTeX-completion-macro-delimiters))
+    (when-let* ((docstruct (symbol-value reftex-docstruct-symbol))
+                (arg-end (scan-lists (point) 1 1))
+                (arg-start (scan-lists (point) -1 1))
+                (arg (buffer-substring-no-properties (+ 1 arg-start) (1- arg-end)))
+                (selection (assoc arg docstruct)))
+      selection)))
+
+(defun cmap-reftex-ref-target ()
+  "Identify reftex label"
+  (when-let* ((_ (bound-and-true-p reftex-mode))
+              (arg (cmap-tex-argument-at-point)))
+    (cons 'cmap-reftex-ref-map arg)))
+
 
 (defvar cmap-citar-key-map
   (cmap-keymap
-    ([return] . citar-open-entry)) ;; in citar 1.0, citar-open-entry a string argument
+    ([find] . citar-open-entry)) ;; in citar 1.0, citar-open-entry a string argument
   "Actions for citation keys")
 
 (defun cmap-citar-key-target ()
@@ -519,6 +548,7 @@
     cmap-region-target
     cmap-button-target
     ;; cmap-alignable ;; crap
+    cmap-reftex-ref-target
     cmap-target-smerge
     cmap-target-flymake-diagnostics
     cmap-target-flycheck-diagnostics
@@ -668,6 +698,12 @@ but use KEY directly."
   "Act on the thing at point using the return key."
   (interactive)
   (cmap-lucky [return]))
+
+;;;###autoload
+(defun cmap-find ()
+  "Act on the thing at point using the [find] key. Typically used to follow a link or a reference."
+  (interactive)
+  (cmap-lucky [find]))
 
 ;;;###autoload
 (defun cmap-prev ()
