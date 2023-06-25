@@ -203,10 +203,10 @@
 (defvar cmap-boon-hl-map
   (cmap-keymap
    ("h" . boon-hl-remove)
-   ("n" . boon-hl-search)
-   ([next] . boon-hl-search)
-   ("p" . boon-hl-search-backward)
-   ([prior] . boon-hl-search-backward)
+   ("n" . boon-qsearch-next)
+   ("p" . boon-qsearch-previous)
+   ([next] . boon-qsearch-next)
+   ([prior] . boon-qsearch-previous)
    ) "Actions for boon-hl-patterns")
 
 (defun cmap-boon-hl-target ()
