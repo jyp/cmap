@@ -34,7 +34,7 @@
 (require 'dash)
 (require 's)
 (require 'thingatpt)
-(require 'cl)
+(require 'cl-lib)
 
 ;; TODO: consider easy-mmode-defmap instead
 (defmacro cmap-keymap (&rest bindings)
