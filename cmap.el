@@ -25,9 +25,8 @@
 
 ;; Act on relevant object at point.  The main entry point is `cmap-cmap'.
 ;; The main configuration entry point is `cmap-targets'.
-
-
-;; Originally a fork of `embark', this is an almost complete rewrite focused on actions in regular buffers, instead of the minibuffer. 
+;; Originally a fork of `embark', this is an almost complete rewrite
+;; focused on actions in regular buffers, instead of the minibuffer.
 
 ;;; Code:
 
@@ -86,7 +85,7 @@
    ([up]   . mc/cycle-backward)
    ([down] . mc/cycle-forward)
    ("\\"   . mc/vertical-align-with-space))
-  "Actions when multiple cursors are active")
+  "Actions when multiple cursors are active.")
 
 (defun cmap-mc-target ()
   "Multiple cursors target."
@@ -141,6 +140,22 @@
   (when (and (eq major-mode 'org-mode)
              (org-in-regexp org-any-link-re))
     (cons 'cmap-org-link-map (match-string-no-properties 0))))
+
+(defvar cmap-org-src-block-map
+  (cmap-keymap
+    ([find] . org-edit-src-code))
+  "Keymap for Cmap org source block actions.")
+
+(defun cmap-org-src-block-target ()
+  "Org-mode source block"
+  (when (eq major-mode 'org-mode)
+    (when-let ((element (org-element-at-point))
+               (type (org-element-type element))
+               (_ (eq type 'src-block))
+               ;; (lang (org-element-property :language element))
+               ;; (lang-f (and  (org-src-get-lang-mode lang)))
+               )
+    (cons 'cmap-org-src-block-map nil))))
 
 (defun cmap-show-flymake-diagnostic (pos)
   "Show the flymake diagnostic at POS in its own buffer."
@@ -557,7 +572,6 @@
     cmap-eshell-target
     cmap-target-org-link
     cmap-url-target
-    cmap-file-target
     cmap-citar-key-target
     cmap-target-command
     cmap-target-function
@@ -572,9 +586,11 @@
     cmap-org-item-target
     cmap-org-timestamp-target
     cmap-org-table-target
+    cmap-org-src-block-target
     cmap-outline-heading-target
     cmap-elisp-sexp-target
     cmap-target-identifier
+    cmap-file-target
     cmap-default-target)
   "List of functions to determine the target in current context.
 Each function should take no argument and return either nil to
