@@ -555,6 +555,7 @@
   (when (and (boundp 'citar-major-mode-functions)
              (--any (and (listp it) (member major-mode it))
                     (-map 'car citar-major-mode-functions)))
+    (require 'citar-autoloads) ; the functions in the citar-major-mode-functions are not (auto-) loaded yet
     (when-let ((key (citar--major-mode-function 'key-at-point #'ignore)))
       ;; in citar 1.0, the key has format (string . start-pos . end-pos), and 
       (cons 'cmap-citar-key-map (car key)))))
