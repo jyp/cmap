@@ -544,6 +544,25 @@
               (arg (cmap-tex-argument-at-point)))
     (cons 'cmap-reftex-ref-map arg)))
 
+(defvar cmap-agda2-goal-map
+  (cmap-keymap
+    ("c" . agda2-)
+    ([space] . agda2-give)
+    ("a" . agda2-auto)
+    ("c" . agda2-make-case)
+    ("r" . agda2-refine)
+    ("h" . agda2-helper-function-type)
+    ("," . agda2-goal-and-context)
+    ([return] . agda2-goal-and-context-and-inferred))
+  "Actions for Agda goal")
+
+
+(defun cmap-agda2-goal-target ()
+  "Identify Agda goal"
+  (when-let* ((_ (eq major-mode 'agda2-mode))
+              (arg (agda2-goal-at (point))))
+    (cons 'cmap-agda2-goal-map 'cmap-no-arg)))
+
 
 (defvar cmap-citar-key-map
   (cmap-keymap
@@ -565,6 +584,7 @@
     cmap-region-target
     cmap-button-target
     ;; cmap-alignable ;; crap
+    cmap-agda2-goal-target
     cmap-reftex-ref-target
     cmap-target-smerge
     cmap-target-flymake-diagnostics
