@@ -563,6 +563,19 @@
               (arg (agda2-goal-at (point))))
     (cons 'cmap-agda2-goal-map 'cmap-no-arg)))
 
+(defvar cmap-agda2-link-map
+  (cmap-keymap
+    ([find] . agda2-goto-definition-keyboard))
+  "Actions for Agda link.")
+
+
+(defun cmap-agda2-link-target ()
+  "Identify Agda link."
+  (when-let* ((_ (eq major-mode 'agda2-mode))
+              (arg (get-text-property (point) 'annotation-goto)))
+    (cons 'cmap-agda2-link-map 'cmap-no-arg)))
+
+
 
 (defvar cmap-citar-key-map
   (cmap-keymap
@@ -584,6 +597,7 @@
     cmap-region-target
     cmap-button-target
     ;; cmap-alignable ;; crap
+    cmap-agda2-link-target
     cmap-agda2-goal-target
     cmap-reftex-ref-target
     cmap-target-smerge
