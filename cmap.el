@@ -735,6 +735,7 @@ Use `cmap-targets' to configure what can be done and how."
   (interactive)
   (pcase-let ((`(,map . ,prompt) (cmap-maps)))
     (funcall cmap-prompter prompt)
+    (setq prefix-arg current-prefix-arg)
     (set-transient-map map 'cmap--keep-pred cmap-prompter-done)))
 
 (defun cmap-lucky (KEY)
