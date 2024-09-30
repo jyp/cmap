@@ -521,7 +521,13 @@
     (cons 'cmap-button-map 'cmap-no-arg)))
 
 (defun cmap-reftex-goto-label (data)
-  (reftex-show-label-location data t nil 'stay))
+  (let* ((wcfg (current-window-configuration))
+         (where (progn
+                  (reftex-show-label-location data t nil 'stay)
+                  (point-marker))))
+    (set-window-configuration wcfg)
+    (switch-to-buffer (marker-buffer where))
+    (goto-char where)))
 
 (defvar cmap-reftex-ref-map
   (cmap-keymap
