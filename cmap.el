@@ -332,19 +332,20 @@
 
 (defvar cmap-org-table-map
   (cmap-keymap
-    ([return]        . org-table-recalculate)
-    ("s"             . org-table-sort-lines)
-    ("c"             . org-table-insert-column)
-    ("C"             . org-table-delete-column)
-    ("r"             . org-table-insert-row)
-    ("R"             . org-table-kill-row)
-    ("h"             . org-table-insert-hline)
-    ("X"             . org-table-transpose-table-at-point)
-    ([(shift right)] . org-table-move-column-right)
-    ([(shift left)]  . org-table-move-column-left)
-    ([(shift up)]    . org-table-move-row-up)
-    ([(shift down)]  . org-table-move-row-down)
-    ) "Actions for org tables")
+    ([return]	. org-table-recalculate)
+    ([tab]	. org-table-toggle-column-width)
+    ("s"	. org-table-sort-lines)
+    ("c"	. org-table-insert-column)
+    ("C"	. org-table-delete-column)
+    ("r"	. org-table-insert-row)
+    ("R"	. org-table-kill-row)
+    ("h"	. org-table-insert-hline)
+    ("X"	. org-table-transpose-table-at-point)
+    ([(shift right)]	. org-table-move-column-right)
+    ([(shift left)]	. org-table-move-column-left)
+    ([(shift up)]	. org-table-move-row-up)
+    ([(shift down)]	. org-table-move-row-down))
+  "Actions for org tables")
 
 (defun cmap-org-table-target ()
   "Identify an org-table target."
