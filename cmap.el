@@ -681,17 +681,25 @@ Replace branches with a single subnode by that subnode."
 (defun cmap--compose-maps (maps)
   (cmap-shorten-keymap (make-composed-keymap maps)))
 
+(defun cmap-applied-targets ()
+  "Invoke all `cmap-targets' and return the list of applicable targets.
+This is returned as a list of conses of the map symbol and the target
+object (as returned by each element of `cmap-targets')"
+  (-non-nil (--map (funcall it) cmap-targets)))
+
+(defun cmap-show-applicable-targets ()
+  (interactive)
+  (message "Applicable targets at point: %s" (-map 'car (cmap-applied-targets))))
 
 (defun cmap-maps ()
   "Invoke all `cmap-targets' and return the composed maps.
 The result is a cons of a composition of the applicable maps in
 the current context, applied to the target, and the same actions
 not applied to targets."
-  (let* ((type-target-pairs (-non-nil (--map (funcall it) cmap-targets)))
-         (map-target-pairs
+  (let* ((map-target-pairs
           (-map (pcase-lambda (`(,type . ,target))
                   (cons (symbol-value type) target))
-                type-target-pairs))
+                (cmap-applied-targets)))
          (unapplied-map (cmap--compose-maps (-map 'car map-target-pairs)))
          (maps (-map (pcase-lambda (`(,map . ,target))
                        (if (eq target 'cmap-no-arg) map
