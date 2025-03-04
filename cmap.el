@@ -643,10 +643,9 @@ functions bound in map-symbol."
   :type 'hook
   :group 'cmap)
 
-
 (defun cmap-traverse-binding (fct binding)
   "Apply FCT to the tail of BINDING."
-  (if (or (keymapp binding) (symbolp binding)) ;; some functions may be not loaded yet, so must use  symbolp
+  (if (or (keymapp binding) (commandp binding) (symbolp binding)) ;; some functions may be not loaded yet, so must use  symbolp in addition to commandp
       (funcall fct binding)
     (cons (car binding) (cmap-traverse-binding fct (cdr binding)))))
 
