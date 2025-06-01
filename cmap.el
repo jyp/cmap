@@ -402,13 +402,41 @@
   "Actions for org latex")
 
 (defun cmap-org-latex-target ()
-  "Identify an org latex target."
+  "Identify an org latex target.
+This is a snippet of latex at point."
   (when (derived-mode-p 'org-mode)
     (when-let* ((datum (org-element-context)))
       (when (memq (org-element-type datum) '(latex-environment latex-fragment))
         (cons 'cmap-org-latex-map 'cmap-no-arg)))))
 
+(defun cmap-goto-reftex-label (label)
+  (reftex-reparse-document)
+  (let* ((wcfg (current-window-configuration))
+         (docstruct (symbol-value reftex-docstruct-symbol))
+         (selection (assoc label docstruct))
+         (where (progn
+                  (reftex-show-label-location selection t nil 'stay)
+                  (point-marker))))
+    (set-window-configuration wcfg)
+    (switch-to-buffer (marker-buffer where))
+    (goto-char where)
+    (reftex-unhighlight 0)))
 
+(defvar cmap-reftex-ref-map
+  (cmap-keymap
+    ([find] . cmap-goto-reftex-label))
+  "Actions for latex references")
+
+(defun cmap-reftex-ref-target ()
+  "Identify a LaTeX reference at point."
+  (save-excursion
+    (let ((orig-point (point)))
+      (and (derived-mode-p '(latex-mode LaTeX-mode))
+           (re-search-backward (rx "\\" (or "eqref" "ref" "cref") "{") nil t)
+           (re-search-forward (rx "{" (group (+? (not (any "}")))) "}") nil t)
+           (<= orig-point (point))
+           (cons 'cmap-reftex-ref-map (match-string-no-properties 1))))))
+  
 (defvar cmap-org-checkbox-map
   (cmap-keymap
     ([return] . org-toggle-checkbox)
@@ -521,35 +549,10 @@
   (when (and (fboundp 'button-at) (button-at (point)))
     (cons 'cmap-button-map 'cmap-no-arg)))
 
-(defun cmap-reftex-goto-label (data)
-  (let* ((wcfg (current-window-configuration))
-         (where (progn
-                  (reftex-show-label-location data t nil 'stay)
-                  (point-marker))))
-    (set-window-configuration wcfg)
-    (switch-to-buffer (marker-buffer where))
-    (goto-char where)))
 
-(defvar cmap-reftex-ref-map
-  (cmap-keymap
-    ([find] . cmap-reftex-goto-label))
-  "Actions for reftex ref")
 
-(defun cmap-tex-argument-at-point ()
-  (interactive)
-  (with-syntax-table (apply #'TeX-search-syntax-table (LaTeX-completion-macro-delimiters))
-    (when-let* ((docstruct (symbol-value reftex-docstruct-symbol))
-                (arg-end (scan-lists (point) 1 1))
-                (arg-start (scan-lists (point) -1 1))
-                (arg (buffer-substring-no-properties (+ 1 arg-start) (1- arg-end)))
-                (selection (assoc arg docstruct)))
-      selection)))
 
-(defun cmap-reftex-ref-target ()
-  "Identify reftex label"
-  (when-let* ((_ (bound-and-true-p reftex-mode))
-              (arg (cmap-tex-argument-at-point)))
-    (cons 'cmap-reftex-ref-map arg)))
+
 
 (defvar cmap-agda2-goal-map
   (cmap-keymap
