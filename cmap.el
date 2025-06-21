@@ -432,7 +432,7 @@ This is a snippet of latex at point."
   (save-excursion
     (let ((orig-point (point)))
       (and (derived-mode-p '(latex-mode LaTeX-mode))
-           (re-search-backward (rx "\\" (or "eqref" "ref" "cref") "{") nil t)
+           (re-search-backward (rx "\\" (or "eqref" "ref" "cref" "nameref" "Cref" "Nameref") "{") nil t)
            (re-search-forward (rx "{" (group (+? (not (any "}")))) "}") nil t)
            (<= orig-point (point))
            (cons 'cmap-reftex-ref-map (match-string-no-properties 1))))))
