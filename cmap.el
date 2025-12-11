@@ -410,7 +410,7 @@ This is a snippet of latex at point."
         (cons 'cmap-org-latex-map 'cmap-no-arg)))))
 
 (defun cmap-goto-reftex-label (label)
-  (reftex-reparse-document)
+  (reftex-access-scan-info)
   (let* ((wcfg (current-window-configuration))
          (docstruct (symbol-value reftex-docstruct-symbol))
          (selection (assoc label docstruct))
